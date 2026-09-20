@@ -228,27 +228,28 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] Results screen: original vs output, percent saved, download
 - [x] Save via `showSaveFilePicker` with Blob fallback (D15) — written, not yet exercised end to end
 - [x] Advanced disclosure showing the generated command (D21)
-- [ ] **Stop here. Run it. React to the feel before generalizing.**
+- [x] **Stop here. Run it. React to the feel before generalizing.**
 
 ### Stage 5 — Generalize
-- [ ] Operation descriptor interface and registry
-- [ ] Generated option forms from schema
-- [ ] Custom-component escape hatch (D23)
-- [ ] Job queue, one active job
-- [ ] Error taxonomy with pattern table and OOM path (D17)
-- [ ] Refactor compression onto the registry to prove the abstraction
+- [x] Operation descriptor interface and registry (`media/operations/descriptor.ts`, `registry.ts`)
+- [x] Generated option forms from schema (`app/components/operation-form.ts`)
+- [x] Custom-component escape hatch (D23) — `customForm` key + `NgComponentOutlet`, first used by trim
+- [x] Job queue, one active job (`app/core/job-queue.ts`, `app/components/job-list.ts`)
+- [x] Error taxonomy with pattern table and OOM path (D17) (`media/ffmpeg/errors.ts`)
+- [x] Refactor compression onto the registry to prove the abstraction — the
+      compress screen is gone; `/:operation` renders any descriptor
 
 ### Stage 6 — Operations
 
 **Video**
-- [ ] Compress (Stage 4) · [ ] Convert format · [ ] Resize · [ ] Crop · [ ] Trim
+- [x] Compress (Stage 4) · [x] Convert format · [ ] Resize · [ ] Crop · [x] Trim
 - [ ] Change FPS · [ ] Change quality · [ ] Change bitrate
 
 **Extract**
-- [ ] Extract audio · [ ] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
+- [x] Extract audio · [ ] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
 
 **Audio**
-- [ ] Convert format · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
+- [x] Convert format (the extract descriptor serves audio inputs too) · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
 - [ ] Change volume · [ ] Fade in/out · [ ] Merge audio
 
 **Images**
