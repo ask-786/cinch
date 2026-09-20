@@ -268,8 +268,8 @@ before the descriptors pile up:
 **Video**
 
 - [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [ ] Crop · [x] Trim
-- [ ] Change FPS · [ ] Change quality · [ ] Change bitrate
-- [ ] Rotate and flip · [ ] Speed up / slow down · [ ] Reverse · [ ] Deinterlace
+- [x] Change FPS · [ ] Change quality · [ ] Change bitrate
+- [x] Rotate and flip · [x] Speed up / slow down · [ ] Reverse · [ ] Deinterlace
 - [ ] Pad to an aspect ratio · [ ] Colour adjust, sharpen, blur · [ ] Remove a green screen
 
 **Extract**
