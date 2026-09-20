@@ -1,0 +1,50 @@
+<div class="flex min-h-screen flex-col">
+  <header class="sticky top-0 z-10 border-b border-line bg-canvas/85 backdrop-blur">
+    <div class="mx-auto flex h-14 w-full max-w-5xl items-center gap-3 px-4">
+      <a routerLink="/" class="flex items-center gap-2 text-ink">
+        <svg class="size-5 text-accent" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <rect x="2.5" y="4" width="15" height="12" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+          <path d="m8.5 8.5 3.5 1.75-3.5 1.75V8.5Z" fill="currentColor" />
+        </svg>
+        <span class="text-[0.95rem] font-semibold tracking-tight">Cinch</span>
+      </a>
+
+      <span class="hidden text-sm text-faint sm:inline">Media tools that stay on your device</span>
+
+      <div class="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          (click)="theme.toggle()"
+          class="rounded-lg p-2 text-muted transition-colors hover:bg-raised hover:text-ink"
+          [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'"
+        >
+          @if (theme.isDark()) {
+            <svg class="size-[1.125rem]" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="3.75" stroke="currentColor" stroke-width="1.6" />
+              <path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M15.95 4.05l-1.4 1.4M5.45 14.55l-1.4 1.4M15.95 15.95l-1.4-1.4M5.45 5.45l-1.4-1.4"
+                    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          } @else {
+            <svg class="size-[1.125rem]" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9Z"
+                    stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            </svg>
+          }
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:py-12">
+    <router-outlet />
+  </main>
+
+  <footer class="border-t border-line">
+    <div class="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-5 text-xs text-faint">
+      <span>Everything runs locally. Nothing is uploaded.</span>
+      <a routerLink="/about" class="ml-auto underline-offset-2 hover:text-muted hover:underline">
+        About &amp; licenses
+      </a>
+    </div>
+  </footer>
+</div>
