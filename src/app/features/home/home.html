@@ -1,0 +1,143 @@
+@if (selection.isEmpty()) {
+  <section class="mx-auto max-w-2xl text-center">
+    <h1 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+      Media tools that never leave your device
+    </h1>
+    <p class="mx-auto mt-4 max-w-xl text-pretty text-base text-muted">
+      Compress a video, pull the audio out of it, cut a clip, make a GIF. Everything happens
+      inside this browser tab — your file is never uploaded anywhere.
+    </p>
+  </section>
+}
+
+<section [class.mt-10]="selection.isEmpty()">
+  @if (selection.isEmpty()) {
+    <app-drop-zone (filesPicked)="selection.add($event)" />
+  } @else {
+    <div class="flex items-baseline justify-between gap-4">
+      <h1 class="text-lg font-semibold tracking-tight">
+        {{ selection.count() }} {{ selection.count() === 1 ? 'file' : 'files' }} ready
+      </h1>
+      <button appButton variant="ghost" size="sm" type="button" (click)="selection.clear()">
+        Clear all
+      </button>
+    </div>
+
+    <div class="mt-4 space-y-3">
+      @for (media of selection.files(); track media.id) {
+        <app-media-info-panel
+          [media]="media"
+          [info]="selection.info().get(media.id)"
+          [warning]="selection.warnings().get(media.id)"
+          [probing]="selection.isProbing(media.id)"
+          (removed)="selection.remove(media.id)"
+          (detailsOpened)="selection.deepProbe(media.id)"
+        />
+      }
+    </div>
+
+    <div class="mt-6">
+      <app-drop-zone
+        [compact]="true"
+        heading="Add another file"
+        subheading="Drop it here, or pick one"
+        buttonLabel="Add a file"
+        (filesPicked)="selection.add($event)"
+      />
+    </div>
+
+    <!-- Stage 5 turns this into the full operation registry. -->
+    <div class="mt-6 rounded-card border border-line bg-surface p-5">
+      <h2 class="text-sm font-semibold text-ink">What would you like to do?</h2>
+      @if (hasVideo()) {
+        <a
+          appButton
+          variant="primary"
+          size="md"
+          routerLink="/compress"
+          class="mt-3 w-full sm:w-auto"
+        >
+          Compress the video
+        </a>
+      }
+      <p class="mt-3 text-sm text-muted">
+        @if (isMultiple()) {
+          Several files are selected, so the combine operations — join clips, merge audio,
+          images into video — will show up here.
+        } @else if (!hasVideo()) {
+          The audio, image and subtitle operations are next.
+        } @else {
+          The rest of the operations arrive in the next stage.
+        }
+      </p>
+    </div>
+  }
+
+  @if (selection.rejected().length > 0) {
+    <div class="mt-4 rounded-card border border-line bg-danger-soft p-4">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-ink">
+            {{ selection.rejected().length === 1 ? 'One file was skipped' : 'Some files were skipped' }}
+          </p>
+          <ul class="mt-2 space-y-1.5 text-sm text-muted">
+            @for (item of selection.rejected(); track item.name) {
+              <li>
+                <span class="font-medium text-ink">{{ item.name }}</span>
+                <span class="px-1 text-faint">—</span>{{ item.reason }}
+              </li>
+            }
+          </ul>
+        </div>
+        <button
+          type="button"
+          (click)="selection.dismissRejections()"
+          aria-label="Dismiss"
+          class="-m-1.5 shrink-0 rounded-md p-1.5 text-faint transition-colors hover:text-ink"
+        >
+          <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
+</section>
+
+@if (selection.isEmpty()) {
+  <section class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+    @for (group of capabilities; track group.title) {
+      <div class="bg-surface p-5">
+        <h2 class="text-sm font-semibold text-ink">{{ group.title }}</h2>
+        <ul class="mt-2.5 space-y-1.5 text-sm text-muted">
+          @for (item of group.items; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </div>
+    }
+  </section>
+
+  <section class="mt-12 grid gap-6 sm:grid-cols-3">
+    <div>
+      <h3 class="text-sm font-semibold text-ink">No upload</h3>
+      <p class="mt-1.5 text-sm text-muted">
+        The conversion runs on your own processor, in this tab. There is no server to send
+        anything to.
+      </p>
+    </div>
+    <div>
+      <h3 class="text-sm font-semibold text-ink">No account</h3>
+      <p class="mt-1.5 text-sm text-muted">
+        Nothing to sign up for, no quota, no watermark. Close the tab and nothing is left behind.
+      </p>
+    </div>
+    <div>
+      <h3 class="text-sm font-semibold text-ink">Real FFmpeg</h3>
+      <p class="mt-1.5 text-sm text-muted">
+        The same tool the pros use, compiled to WebAssembly.
+        <a routerLink="/about" class="text-accent underline-offset-2 hover:underline">How it works</a>.
+      </p>
+    </div>
+  </section>
+}

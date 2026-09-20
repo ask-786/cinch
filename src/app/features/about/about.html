@@ -1,0 +1,45 @@
+<article class="mx-auto max-w-2xl">
+  <h1 class="text-2xl font-semibold tracking-tight">About Cinch</h1>
+
+  <p class="mt-4 text-sm leading-relaxed text-muted">
+    Cinch is a browser front end for
+    <a href="https://ffmpeg.org" target="_blank" rel="noopener noreferrer"
+       class="text-accent underline-offset-2 hover:underline">FFmpeg</a>,
+    compiled to WebAssembly. When you pick a file, the file is handed to a worker thread
+    running inside this tab. Nothing is sent over the network — there is no server that could
+    receive it.
+  </p>
+
+  <h2 class="mt-8 text-sm font-semibold text-ink">What that means in practice</h2>
+  <ul class="mt-2 space-y-2 text-sm leading-relaxed text-muted">
+    <li>Speed depends on your own machine, not on a queue somewhere.</li>
+    <li>Very large files are limited by how much memory the tab can use, not by an upload cap.</li>
+    <li>Once the page is loaded it works offline.</li>
+  </ul>
+
+  <h2 class="mt-8 text-sm font-semibold text-ink">Licenses</h2>
+  <p class="mt-2 text-sm leading-relaxed text-muted">
+    The FFmpeg build shipped with this site is compiled with <code class="font-mono text-xs">--enable-gpl</code>
+    and is licensed under the GNU General Public License, version 2 or later. Distributing it
+    puts this site under the same terms, so the source is available and the notice stays here.
+  </p>
+
+  <div class="mt-4">
+    <app-disclosure summary="What is compiled into this FFmpeg build">
+      <div class="space-y-2 text-sm leading-relaxed text-muted">
+        <p>
+          FFmpeg 5.1.4 (emcc 3.1.40, GPL, SIMD enabled) with libx264, libx265, libvpx (VP8 and
+          VP9), libtheora, libwebp, libmp3lame, libopus, libvorbis, the native AAC encoder, FLAC,
+          ALAC, PCM and AC-3, plus libass, libfreetype and libzimg.
+        </p>
+        <p>
+          AV1 can be read but not written, and libfdk-aac is not included.
+        </p>
+      </div>
+    </app-disclosure>
+  </div>
+
+  <p class="mt-8 text-xs text-faint">
+    FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project.
+  </p>
+</article>

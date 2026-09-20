@@ -79,6 +79,21 @@ overshoots to 1.998 on a two-input concat, goes negative on lavfi sources, and e
 Always pass explicit `coreURL`/`wasmURL`. Core files must be **unhashed assets** with stable URLs,
 since those are runtime strings the bundler cannot rewrite.
 
+**Measured during Stage 3–4 (Chrome, 8 logical cores), not part of the original survey:**
+
+- **The MT core needs an explicit `-threads`.** Left to itself, libx264 picks a thread count
+  that **hangs the core forever** — only `terminate()` recovers. `-threads 8` hangs, `-threads 6`
+  throws inside the core, `-threads 4` works and is **2.6× faster** than single-threaded
+  (6.0 s vs 15.7 s for a 6 s 720p clip). Cinch caps MT at 4 threads.
+- **A failed MT exec poisons the instance.** Every later call throws
+  `TypeError: Cannot read properties of undefined (reading 'startsWith')` — the core's own
+  `catch (e) { if (!e.message.startsWith("Aborted")) ... }` on an error with no `message`.
+  So a thrown exec terminates the instance, and the job retries once on the single-threaded core.
+- **MT is fine for stream copy and audio encoding** (`-c copy` 127 ms, AAC 341 ms) — the
+  thread trouble is specific to encoders that spawn their own threads.
+- **`time` in progress events is microseconds** (`6_013_968` for a 6.01 s output), and
+  `progress` overshoots to `1.0023` at the end of a plain transcode.
+
 **Angular specifics:** `ng serve` supports a `headers` option in `angular.json` (not a CLI flag),
 so cross-origin isolation works in dev with no proxy. Worker bundling is automatic for the literal
 form `new Worker(new URL('./x.worker.ts', import.meta.url))` — a computed URL is silently left
@@ -115,9 +130,14 @@ src/
     operations/      one descriptor + argument builder per operation
     ffmpeg/          arg helpers, codec tables, probe parsing
     file-system/     WORKERFS mount, save-to-disk, size preflight
-  workers/
-    ffmpeg.worker.ts
+  workers/            (reserved — see the note below)
 ```
+
+**Where the worker actually is:** `@ffmpeg/ffmpeg`'s `FFmpeg` class spawns its own module
+worker and runs every `exec`, `ffprobe` and WORKERFS mount inside it, so the UI thread only
+posts messages. Cinch wraps that class in `app/core/ffmpeg-client.ts` rather than nesting it
+inside a second worker of our own: a nested worker would buy nothing here and costs portability.
+The client is the only file that knows this, so moving it later is a one-file change.
 
 Rules: no FFmpeg strings inside components. Argument builders are pure and testable. Adding an
 operation means adding one descriptor file.
@@ -172,42 +192,42 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 ## 6. Build stages
 
 ### Stage 1 — Foundation
-- [ ] `ng new` Angular 22, zoneless, standalone, Tailwind 4, Vitest
-- [ ] COOP/COEP headers in `angular.json` dev server
-- [ ] Design tokens, dark mode, base layout
-- [ ] Hand-built primitives: button, select, slider, dialog, progress, disclosure
-- [ ] Routing shell with lazy feature chunks
-- [ ] Landing page with privacy message
-- [ ] `.gitignore`, README
+- [x] `ng new` Angular 22, zoneless, standalone, Tailwind 4, Vitest
+- [x] COOP/COEP headers in `angular.json` dev server
+- [x] Design tokens, dark mode, base layout
+- [x] Hand-built primitives: button, select, slider, dialog, progress, disclosure
+- [x] Routing shell with lazy feature chunks
+- [x] Landing page with privacy message
+- [x] `.gitignore`, README
 
 ### Stage 2 — File handling
-- [ ] Drop zone with drag state, plus file picker fallback
-- [ ] Multi-file drop detection (D24)
-- [ ] Type validation and friendly rejection
-- [ ] Size preflight and mobile cap (D18)
-- [ ] Instant native metadata via `HTMLVideoElement` / `AudioContext` (D5)
-- [ ] File info panel with a Details disclosure
+- [x] Drop zone with drag state, plus file picker fallback
+- [x] Multi-file drop detection (D24)
+- [x] Type validation and friendly rejection
+- [x] Size preflight and mobile cap (D18)
+- [x] Instant native metadata via `HTMLVideoElement` / `AudioContext` (D5)
+- [x] File info panel with a Details disclosure
 
 ### Stage 3 — FFmpeg in a worker
-- [ ] Self-host both cores as unhashed assets (D3)
-- [ ] `ffmpeg.worker.ts` with a typed message protocol
-- [ ] Worker client service: load, exec, progress, terminate
-- [ ] Capability detection and per-job core routing (D1, D12)
-- [ ] WORKERFS mount for input (D4)
-- [ ] Cache API prewarm on idle
-- [ ] `ffprobe` JSON probing, merged into the info panel
-- [ ] Progress sanitizer and duration-based recomputation (D14b)
+- [x] Self-host both cores as unhashed assets (D3)
+- [x] Typed worker client (`core/ffmpeg-client.ts`, see the architecture note)
+- [x] Worker client service: load, exec, progress, terminate
+- [x] Capability detection and per-job core routing (D1, D12)
+- [x] WORKERFS mount for input (D4)
+- [x] Cache API prewarm on idle
+- [x] `ffprobe` JSON probing, merged into the info panel
+- [x] Progress sanitizer and duration-based recomputation (D14b)
 
 ### Stage 4 — Compression end to end **← checkpoint, runnable**
-- [ ] `VideoCompressionOptions` model and argument builder
-- [ ] Unit tests for the builder
-- [ ] Quality mode: slider → per-encoder CRF
-- [ ] Target-size mode: bitrate math with presets
-- [ ] Live size estimation
-- [ ] Processing screen: progress, elapsed, ETA, cancel, logs
-- [ ] Results screen: original vs output, percent saved, download
-- [ ] Save via `showSaveFilePicker` with Blob fallback (D15)
-- [ ] Advanced disclosure showing the generated command (D21)
+- [x] `VideoCompressionOptions` model and argument builder
+- [x] Unit tests for the builder
+- [x] Quality mode: slider → per-encoder CRF
+- [x] Target-size mode: bitrate math with presets
+- [x] Live size estimation
+- [x] Processing screen: progress, elapsed, ETA, cancel, logs
+- [x] Results screen: original vs output, percent saved, download
+- [x] Save via `showSaveFilePicker` with Blob fallback (D15) — written, not yet exercised end to end
+- [x] Advanced disclosure showing the generated command (D21)
 - [ ] **Stop here. Run it. React to the feel before generalizing.**
 
 ### Stage 5 — Generalize
