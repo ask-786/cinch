@@ -51,7 +51,15 @@ libvorbis, native AAC, flac, alac, pcm, ac3 · libass, libfribidi, libfreetype, 
 all of scale, crop, fps, palettegen, paletteuse, volume, afade, atempo, concat, zscale,
 subtitles, ass, drawtext, overlay, loudnorm, thumbnail, reverse, amix.
 
-**Not available:** AV1 **encode** (decode only, and slow — no dav1d) · libfdk_aac · libvmaf · fontconfig.
+**Not available:** AV1 **encode** (decode only, and slow — no dav1d) · libfdk_aac · libvmaf · fontconfig · **vidstab** (so no real stabilisation; only the weaker `deshake`).
+
+**Full inventory, measured 2026-09-20** by running the shipped core with `-filters`, `-muxers`
+and `-encoders`: **473 filters, 176 muxers, 194 encoders**. Everything the operations below need
+is present, including `transpose`/`hflip`/`vflip`, `setpts`/`atempo`/`asetrate`, `reverse`/`areverse`,
+`loudnorm`/`dynaudnorm`, `silenceremove`, `drawtext`/`overlay`, `yadif`/`bwdif`, `pad`, `hstack`/`vstack`/`xstack`,
+`showwavespic`/`showspectrumpic`, `eq`/`curves`/`unsharp`/`gblur`, `chromakey`/`colorkey`, `minterpolate`,
+the `segment` and `image2` muxers, `libwebp_anim` and `apng`, and the `srt`/`ass`/`webvtt`/`mov_text`
+subtitle encoders. The only thing looked for and missing is `vidstab`.
 
 **Memory — the counterintuitive one:**
 
@@ -238,6 +246,8 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 - [x] Operation descriptor interface and registry (`media/operations/descriptor.ts`, `registry.ts`)
 - [x] Generated option forms from schema (`app/components/operation-form.ts`)
+- [x] Typed-in fields: `number` and `text` kinds, plus the `app-text-input` primitive — the
+      schema can now express a width or a caption, so only crop and GIF still need the hatch
 - [x] Custom-component escape hatch (D23) — `customForm` key + `NgComponentOutlet`, first used by trim
 - [x] Job queue, one active job (`app/core/job-queue.ts`, `app/components/job-list.ts`)
 - [x] Error taxonomy with pattern table and OOM path (D17) (`media/ffmpeg/errors.ts`)
@@ -246,23 +256,39 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 ### Stage 6 — Operations
 
+**Two things gate most of the list below.** Neither is an operation, and both are worth doing
+before the descriptors pile up:
+
+1. **One input per job.** `JobSpec` mounts exactly one file (`app/core/job-runner.ts`), which
+   blocks join, merge audio, watermark, replace audio, the stacks and images→video. D7 already
+   says multi-input yes, batch no.
+2. **One output per job.** `outputPath`, `outputExtension` and the save step all assume a single
+   file, so extract frames, thumbnails and split-into-segments have nowhere to put their results.
+
 **Video**
 
-- [x] Compress (Stage 4) · [x] Convert format · [ ] Resize · [ ] Crop · [x] Trim
+- [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [ ] Crop · [x] Trim
 - [ ] Change FPS · [ ] Change quality · [ ] Change bitrate
+- [ ] Rotate and flip · [ ] Speed up / slow down · [ ] Reverse · [ ] Deinterlace
+- [ ] Pad to an aspect ratio · [ ] Colour adjust, sharpen, blur · [ ] Remove a green screen
 
 **Extract**
 
 - [x] Extract audio · [ ] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
+- [ ] Scene-based thumbnails (`thumbnail`, `select`) · [ ] Animated WebP and APNG
 
 **Audio**
 
 - [x] Convert format (the extract descriptor serves audio inputs too) · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
 - [ ] Change volume · [ ] Fade in/out · [ ] Merge audio
+- [ ] Normalise loudness (`loudnorm`) · [ ] Trim silence · [ ] Waveform / spectrogram image
+- [ ] Remove the sound from a video · [ ] Replace a video's audio track
 
 **Images**
 
 - [ ] Images → video · [ ] Video → images · [ ] GIF conversion
+- [ ] Join videos (`concat`) · [ ] Side by side and grids (`hstack`/`vstack`/`xstack`)
+- [ ] Watermark or text over a frame · [ ] Split into segments · [ ] Strip or fix metadata
 
 **Subtitles**
 
