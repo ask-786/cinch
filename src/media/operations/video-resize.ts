@@ -1,5 +1,6 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation } from './descriptor';
+import { h264OutputArgs } from './h264-output';
 import { qualityToCrf } from './video-compress';
 
 /**
@@ -103,23 +104,8 @@ export function buildVideoResizeArgs(
   const filter = resizeFilter(options);
   if (filter) args.push('-vf', filter);
 
-  args.push(
-    '-c:v',
-    'libx264',
-    '-preset',
-    'veryfast',
-    '-crf',
-    String(qualityToCrf(options.quality, 'h264')),
-    '-pix_fmt',
-    'yuv420p',
-    // Resizing does not touch the sound, so it is copied rather than re-encoded.
-    '-c:a',
-    'copy',
-    '-movflags',
-    '+faststart',
-    paths.outputPath,
-  );
-
+  // Resizing does not touch the sound, so it is copied rather than re-encoded.
+  args.push(...h264OutputArgs({ quality: options.quality, audio: 'copy' }), paths.outputPath);
   return args;
 }
 

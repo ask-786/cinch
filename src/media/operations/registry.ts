@@ -3,7 +3,10 @@ import { audioExtract } from './audio-extract';
 import type { Operation, OperationGroup } from './descriptor';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
+import { videoFps } from './video-fps';
 import { videoResize } from './video-resize';
+import { videoRotate } from './video-rotate';
+import { videoSpeed } from './video-speed';
 import { videoTrim } from './video-trim';
 
 /**
@@ -15,6 +18,9 @@ export const OPERATIONS: readonly Operation[] = [
   videoCompress,
   videoConvert,
   videoResize,
+  videoRotate,
+  videoSpeed,
+  videoFps,
   videoTrim,
   audioExtract,
 ];
