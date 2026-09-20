@@ -7,7 +7,9 @@ describe('outputFileName', () => {
   });
 
   it('survives dots in the middle and names without any', () => {
-    expect(outputFileName('holiday.final.v2.mkv', 'small', 'mp4')).toBe('holiday.final.v2-small.mp4');
+    expect(outputFileName('holiday.final.v2.mkv', 'small', 'mp4')).toBe(
+      'holiday.final.v2-small.mp4',
+    );
     expect(outputFileName('recording', 'small', 'mp4')).toBe('recording-small.mp4');
   });
 });

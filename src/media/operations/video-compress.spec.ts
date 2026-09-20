@@ -86,8 +86,9 @@ describe('buildVideoCompressionArgs', () => {
   });
 
   it('takes longer when asked to', () => {
-    expect(valueAfter(buildVideoCompressionArgs(options({ takeLonger: true }), context), '-preset'))
-      .toBe('medium');
+    expect(
+      valueAfter(buildVideoCompressionArgs(options({ takeLonger: true }), context), '-preset'),
+    ).toBe('medium');
   });
 
   it('drops the audio track on request', () => {
@@ -97,8 +98,9 @@ describe('buildVideoCompressionArgs', () => {
   });
 
   it('scales only downwards, and only to an even width', () => {
-    expect(valueAfter(buildVideoCompressionArgs(options({ maxHeight: 720 }), context), '-vf'))
-      .toBe('scale=-2:720');
+    expect(valueAfter(buildVideoCompressionArgs(options({ maxHeight: 720 }), context), '-vf')).toBe(
+      'scale=-2:720',
+    );
     // The source is already shorter than the cap, so there is nothing to do.
     expect(buildVideoCompressionArgs(options({ maxHeight: 2160 }), context)).not.toContain('-vf');
   });
@@ -115,10 +117,10 @@ describe('buildVideoCompressionArgs', () => {
   });
 
   it('falls back to quality when the duration is unknown, rather than guessing a bitrate', () => {
-    const args = buildVideoCompressionArgs(
-      options({ mode: 'size', targetBytes: 25_000_000 }),
-      { ...context, info: { source: 'native', kind: 'video' } },
-    );
+    const args = buildVideoCompressionArgs(options({ mode: 'size', targetBytes: 25_000_000 }), {
+      ...context,
+      info: { source: 'native', kind: 'video' },
+    });
     expect(valueAfter(args, '-crf')).toBe('23');
     expect(args).not.toContain('-b:v');
   });
@@ -148,8 +150,9 @@ describe('videoBitrateBps', () => {
 
 describe('estimateOutputBytes', () => {
   it('returns the target itself in size mode', () => {
-    expect(estimateOutputBytes(options({ mode: 'size', targetBytes: 10_000_000 }), info))
-      .toBe(10_000_000);
+    expect(estimateOutputBytes(options({ mode: 'size', targetBytes: 10_000_000 }), info)).toBe(
+      10_000_000,
+    );
   });
 
   it('gets within a sensible range for a known encode', () => {

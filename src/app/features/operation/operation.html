@@ -13,7 +13,13 @@
         aria-label="Back to files"
       >
         <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          <path
+            d="M10 3 5 8l5 5"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
       <div class="min-w-0">
@@ -35,9 +41,11 @@
             type="button"
             (click)="choose(candidate.id)"
             class="max-w-52 truncate rounded-full border px-3 py-1 text-xs transition-colors"
-            [class]="candidate.id === file.id
-              ? 'border-accent bg-accent-soft text-ink'
-              : 'border-line text-muted hover:border-line-strong hover:text-ink'"
+            [class]="
+              candidate.id === file.id
+                ? 'border-accent bg-accent-soft text-ink'
+                : 'border-line text-muted hover:border-line-strong hover:text-ink'
+            "
           >
             {{ candidate.name }}
           </button>
@@ -58,8 +66,8 @@
         @if (current.status === 'waiting') {
           <h2 class="text-base font-semibold">Waiting its turn</h2>
           <p class="mt-1 text-sm text-muted">
-            {{ waitingAhead() }} job{{ waitingAhead() === 1 ? '' : 's' }} ahead of this one. Only one
-            can run at a time.
+            {{ waitingAhead() }} job{{ waitingAhead() === 1 ? '' : 's' }} ahead of this one. Only
+            one can run at a time.
           </p>
         } @else {
           <h2 class="text-base font-semibold">
@@ -80,7 +88,11 @@
             />
             <div class="mt-2 flex justify-between font-mono text-xs text-muted">
               <span>
-                {{ live?.ratio !== undefined ? ((live?.ratio ?? 0) * 100 | number: '1.0-0') + '%' : 'Working…' }}
+                {{
+                  live?.ratio !== undefined
+                    ? ((live?.ratio ?? 0) * 100 | number: '1.0-0') + '%'
+                    : 'Working…'
+                }}
               </span>
               <span>
                 {{ formatElapsed(live?.elapsedMs ?? 0) }}
@@ -102,7 +114,9 @@
         @if (current.status === 'running') {
           <div class="mt-4 border-t border-line pt-3">
             <app-disclosure summary="Log">
-              <pre class="max-h-56 overflow-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-muted">{{ logTail() }}</pre>
+              <pre
+                class="max-h-56 overflow-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-muted"
+                >{{ logTail() }}</pre>
             </app-disclosure>
           </div>
         }
@@ -156,10 +170,19 @@
         }
         <div class="mt-4">
           <app-disclosure summary="What FFmpeg said">
-            <pre class="max-h-64 overflow-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-muted">{{ logTail() }}</pre>
+            <pre
+              class="max-h-64 overflow-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-muted"
+              >{{ logTail() }}</pre>
           </app-disclosure>
         </div>
-        <button appButton variant="secondary" size="md" type="button" class="mt-4" (click)="again()">
+        <button
+          appButton
+          variant="secondary"
+          size="md"
+          type="button"
+          class="mt-4"
+          (click)="again()"
+        >
           Try different settings
         </button>
       </section>
@@ -218,14 +241,24 @@
             </button>
           </div>
           <p class="mt-3 text-xs text-faint">
-            Saved as <span class="font-mono">{{ outputName() }}</span>.
+            Saved as <span class="font-mono">{{ outputName() }}</span
+            >.
           </p>
         </div>
 
         <app-disclosure summary="Advanced">
           <p class="text-xs text-muted">This is the command that will run:</p>
-          <pre class="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs leading-relaxed text-ink">{{ command() }}</pre>
-          <button appButton variant="secondary" size="sm" type="button" class="mt-2" (click)="copyCommand()">
+          <pre
+            class="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs leading-relaxed text-ink"
+            >{{ command() }}</pre>
+          <button
+            appButton
+            variant="secondary"
+            size="sm"
+            type="button"
+            class="mt-2"
+            (click)="copyCommand()"
+          >
             {{ copied() ? 'Copied' : 'Copy' }}
           </button>
         </app-disclosure>

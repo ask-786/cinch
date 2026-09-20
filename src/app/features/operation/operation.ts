@@ -39,15 +39,7 @@ import { CUSTOM_FORMS, type CustomFormInputs } from './custom-forms';
   selector: 'app-operation',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation.html',
-  imports: [
-    Button,
-    DecimalPipe,
-    Disclosure,
-    JobList,
-    NgComponentOutlet,
-    OperationForm,
-    Progress,
-  ],
+  imports: [Button, DecimalPipe, Disclosure, JobList, NgComponentOutlet, OperationForm, Progress],
 })
 export class OperationScreen implements OnInit {
   private readonly router = inject(Router);
@@ -281,6 +273,9 @@ export class OperationScreen implements OnInit {
   protected waitingAhead(): number {
     const jobs = this.queue.jobs();
     const index = jobs.findIndex((job) => job.id === this.jobId());
-    return index <= 0 ? 0 : jobs.slice(0, index).filter((job) => job.status === 'waiting' || job.status === 'running').length;
+    return index <= 0
+      ? 0
+      : jobs.slice(0, index).filter((job) => job.status === 'waiting' || job.status === 'running')
+          .length;
   }
 }

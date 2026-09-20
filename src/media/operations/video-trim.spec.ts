@@ -75,15 +75,15 @@ describe('the trim descriptor', () => {
   });
 
   it('says out loud that a copy cuts on a keyframe', () => {
-    const warnings = videoTrim.preflight?.(
-      options({ startSeconds: 0, endSeconds: 10 }) as never,
-      { info },
-    ) ?? [];
+    const warnings =
+      videoTrim.preflight?.(options({ startSeconds: 0, endSeconds: 10 }) as never, { info }) ?? [];
     expect(warnings.join(' ')).toMatch(/keyframe/i);
   });
 
   it('reports the clip’s own length, which is what progress is measured against', () => {
-    expect(videoTrim.outputDuration?.(options({ startSeconds: 10, endSeconds: 25 }) as never, {})).toBe(15);
+    expect(
+      videoTrim.outputDuration?.(options({ startSeconds: 10, endSeconds: 25 }) as never, {}),
+    ).toBe(15);
     expect(trimDuration(options({ startSeconds: 25, endSeconds: 10 }))).toBe(0);
   });
 });

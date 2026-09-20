@@ -41,12 +41,23 @@ import { Button } from './ui';
         [class]="active() ? 'text-accent' : 'text-faint'"
         [class.size-10]="!compact()"
         [class.size-7]="compact()"
-        viewBox="0 0 24 24" fill="none" aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
       >
-        <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" stroke="currentColor" stroke-width="1.6"
-              stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"
-              stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        <path
+          d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+        />
       </svg>
 
       <p class="mt-4 text-base font-medium text-ink">

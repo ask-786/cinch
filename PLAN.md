@@ -24,14 +24,14 @@ the actual WASM binary, not recalled from memory.
 
 ## 2. Stack
 
-| Piece | Choice | Note |
-|---|---|---|
-| Framework | Angular 22 (zoneless, standalone, signals) | Zoneless is the v22 scaffold default |
-| Styling | Tailwind CSS 4 | `ng new --style=tailwind` wires postcss automatically |
-| Components | Hand-built on Tailwind | No Spartan, no Material — see D20 |
-| Tests | Vitest (v22 default) | Argument builders only |
-| FFmpeg | `@ffmpeg/ffmpeg` 0.12.15 + `@ffmpeg/core` **and** `@ffmpeg/core-mt` 0.12.10 | Both cores shipped, chosen per job |
-| Hosting | Portable `dist/`, host-agnostic | Header configs for Netlify/Vercel/nginx + service-worker fallback |
+| Piece      | Choice                                                                      | Note                                                              |
+| ---------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Framework  | Angular 22 (zoneless, standalone, signals)                                  | Zoneless is the v22 scaffold default                              |
+| Styling    | Tailwind CSS 4                                                              | `ng new --style=tailwind` wires postcss automatically             |
+| Components | Hand-built on Tailwind                                                      | No Spartan, no Material — see D20                                 |
+| Tests      | Vitest (v22 default)                                                        | Argument builders only                                            |
+| FFmpeg     | `@ffmpeg/ffmpeg` 0.12.15 + `@ffmpeg/core` **and** `@ffmpeg/core-mt` 0.12.10 | Both cores shipped, chosen per job                                |
+| Hosting    | Portable `dist/`, host-agnostic                                             | Header configs for Netlify/Vercel/nginx + service-worker fallback |
 
 **Framework note:** the brief mandates Angular. Confirmed decision is to build on Angular and
 raise it at the Stage 4 checkpoint if it causes real friction, rather than switching blind.
@@ -55,10 +55,10 @@ subtitles, ass, drawtext, overlay, loudnorm, thumbnail, reverse, amix.
 
 **Memory — the counterintuitive one:**
 
-| Core | Heap | Growth | Needs isolation |
-|---|---|---|---|
-| Single-thread | 32 MB → **2048 MB** | yes | no |
-| Multi-thread | **1024 MB fixed** | **no** (shared memory can't grow) | yes (COOP/COEP) |
+| Core          | Heap                | Growth                            | Needs isolation |
+| ------------- | ------------------- | --------------------------------- | --------------- |
+| Single-thread | 32 MB → **2048 MB** | yes                               | no              |
+| Multi-thread  | **1024 MB fixed**   | **no** (shared memory can't grow) | yes (COOP/COEP) |
 
 MT is roughly 3–5× faster but has **half** the headroom. Big jobs are safer single-threaded.
 
@@ -148,34 +148,34 @@ operation means adding one descriptor file.
 
 Resolved during design review. `D` numbers are referenced from the build stages.
 
-| # | Decision | Chosen |
-|---|---|---|
-| D1 | Threading | Ship both cores, feature-detect `crossOriginIsolated` |
-| D2 | Hosting | Portable static build + header configs + service-worker fallback |
-| D3 | WASM delivery | Self-host. Required for COEP anyway, and the privacy claim must be literally true |
-| D4 | Large files | WORKERFS zero-copy mount for input; in-memory fallback; size preflight |
-| D5 | Probing | Native metadata instantly, FFmpeg probe in background on intent |
-| D6 | Scope | All video/audio/image operations, plus subtitles (D13) |
-| D7 | Multi-file | Multi-input operations yes; sequential queue; **no batch** in v1 |
-| D8 | Routing | Routed per operation for lazy chunks and shareable links; guard redirects on refresh |
-| D9 | Design | Tailwind 4, quiet native-utility feel, dark mode with manual override |
-| D10 | Testing | Unit tests on argument builders and option mapping. No e2e |
-| D11 | Framework | Angular (brief mandates it); revisit at Stage 4 checkpoint if it fights |
-| D12 | Core routing | **Per job**: MT when estimated output < 250 MB and source ≤ 1080p, else ST |
-| D13 | Subtitles | In scope — extract, convert, and burn-in. Ship a `.ttf` since there is no fontconfig |
-| D14 | Cancel | `terminate()` + reload, WASM cached, replacement instance pre-warmed |
-| D14b | Progress | Compute our own from `time` ÷ known output duration; sanitize every event; `-stats_period 0.1` |
-| D15 | Output | `showSaveFilePicker` streaming where supported, Blob download fallback. No OPFS persistence |
-| D16 | Compression | Two modes: quality slider **and** target size. Presets: Email 25 MB, Discord 10 MB, Small/Balanced/High |
-| D17 | Errors | Pattern table over common failures + cheap preflight on known-bad combinations + explicit OOM path |
-| D18 | Mobile | Responsive, with a stated file-size cap rather than a crashed tab |
-| D19 | Name | **Cinch.** GPL/FFmpeg attribution in an About/Licenses footer |
-| D20 | Components | Hand-built. Spartan is mature enough but the components that matter here aren't in any library |
-| D21 | Advanced mode | Read-only generated command + copy button emitting a real desktop `ffmpeg` line |
-| D22 | Compatibility | Offer H.265 with a plain warning; never default to it. Default MP4/H.264/AAC plays everywhere |
-| D23 | Operation model | Declarative descriptors with generated forms; custom component escape hatch for trim, crop, GIF |
-| D24 | Multi-file UX | Dropping several files reveals combine operations; reorder by drag |
-| D25 | Delivery | Staged with a runnable checkpoint after compression works end to end |
+| #    | Decision        | Chosen                                                                                                  |
+| ---- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| D1   | Threading       | Ship both cores, feature-detect `crossOriginIsolated`                                                   |
+| D2   | Hosting         | Portable static build + header configs + service-worker fallback                                        |
+| D3   | WASM delivery   | Self-host. Required for COEP anyway, and the privacy claim must be literally true                       |
+| D4   | Large files     | WORKERFS zero-copy mount for input; in-memory fallback; size preflight                                  |
+| D5   | Probing         | Native metadata instantly, FFmpeg probe in background on intent                                         |
+| D6   | Scope           | All video/audio/image operations, plus subtitles (D13)                                                  |
+| D7   | Multi-file      | Multi-input operations yes; sequential queue; **no batch** in v1                                        |
+| D8   | Routing         | Routed per operation for lazy chunks and shareable links; guard redirects on refresh                    |
+| D9   | Design          | Tailwind 4, quiet native-utility feel, dark mode with manual override                                   |
+| D10  | Testing         | Unit tests on argument builders and option mapping. No e2e                                              |
+| D11  | Framework       | Angular (brief mandates it); revisit at Stage 4 checkpoint if it fights                                 |
+| D12  | Core routing    | **Per job**: MT when estimated output < 250 MB and source ≤ 1080p, else ST                              |
+| D13  | Subtitles       | In scope — extract, convert, and burn-in. Ship a `.ttf` since there is no fontconfig                    |
+| D14  | Cancel          | `terminate()` + reload, WASM cached, replacement instance pre-warmed                                    |
+| D14b | Progress        | Compute our own from `time` ÷ known output duration; sanitize every event; `-stats_period 0.1`          |
+| D15  | Output          | `showSaveFilePicker` streaming where supported, Blob download fallback. No OPFS persistence             |
+| D16  | Compression     | Two modes: quality slider **and** target size. Presets: Email 25 MB, Discord 10 MB, Small/Balanced/High |
+| D17  | Errors          | Pattern table over common failures + cheap preflight on known-bad combinations + explicit OOM path      |
+| D18  | Mobile          | Responsive, with a stated file-size cap rather than a crashed tab                                       |
+| D19  | Name            | **Cinch.** GPL/FFmpeg attribution in an About/Licenses footer                                           |
+| D20  | Components      | Hand-built. Spartan is mature enough but the components that matter here aren't in any library          |
+| D21  | Advanced mode   | Read-only generated command + copy button emitting a real desktop `ffmpeg` line                         |
+| D22  | Compatibility   | Offer H.265 with a plain warning; never default to it. Default MP4/H.264/AAC plays everywhere           |
+| D23  | Operation model | Declarative descriptors with generated forms; custom component escape hatch for trim, crop, GIF         |
+| D24  | Multi-file UX   | Dropping several files reveals combine operations; reorder by drag                                      |
+| D25  | Delivery        | Staged with a runnable checkpoint after compression works end to end                                    |
 
 ### Settled parameters
 
@@ -192,6 +192,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 ## 6. Build stages
 
 ### Stage 1 — Foundation
+
 - [x] `ng new` Angular 22, zoneless, standalone, Tailwind 4, Vitest
 - [x] COOP/COEP headers in `angular.json` dev server
 - [x] Design tokens, dark mode, base layout
@@ -201,6 +202,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] `.gitignore`, README
 
 ### Stage 2 — File handling
+
 - [x] Drop zone with drag state, plus file picker fallback
 - [x] Multi-file drop detection (D24)
 - [x] Type validation and friendly rejection
@@ -209,6 +211,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] File info panel with a Details disclosure
 
 ### Stage 3 — FFmpeg in a worker
+
 - [x] Self-host both cores as unhashed assets (D3)
 - [x] Typed worker client (`core/ffmpeg-client.ts`, see the architecture note)
 - [x] Worker client service: load, exec, progress, terminate
@@ -219,6 +222,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] Progress sanitizer and duration-based recomputation (D14b)
 
 ### Stage 4 — Compression end to end **← checkpoint, runnable**
+
 - [x] `VideoCompressionOptions` model and argument builder
 - [x] Unit tests for the builder
 - [x] Quality mode: slider → per-encoder CRF
@@ -231,6 +235,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] **Stop here. Run it. React to the feel before generalizing.**
 
 ### Stage 5 — Generalize
+
 - [x] Operation descriptor interface and registry (`media/operations/descriptor.ts`, `registry.ts`)
 - [x] Generated option forms from schema (`app/components/operation-form.ts`)
 - [x] Custom-component escape hatch (D23) — `customForm` key + `NgComponentOutlet`, first used by trim
@@ -242,23 +247,29 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 ### Stage 6 — Operations
 
 **Video**
+
 - [x] Compress (Stage 4) · [x] Convert format · [ ] Resize · [ ] Crop · [x] Trim
 - [ ] Change FPS · [ ] Change quality · [ ] Change bitrate
 
 **Extract**
+
 - [x] Extract audio · [ ] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
 
 **Audio**
+
 - [x] Convert format (the extract descriptor serves audio inputs too) · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
 - [ ] Change volume · [ ] Fade in/out · [ ] Merge audio
 
 **Images**
+
 - [ ] Images → video · [ ] Video → images · [ ] GIF conversion
 
 **Subtitles**
+
 - [ ] Extract · [ ] Convert format · [ ] Burn in (ships a `.ttf`)
 
 ### Stage 7 — Polish
+
 - [ ] Empty, loading, and error states throughout
 - [ ] Responsive pass down to phone width
 - [ ] Chain output into another operation
@@ -272,12 +283,12 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 ## 7. Known risks
 
-| Risk | Mitigation |
-|---|---|
+| Risk                                  | Mitigation                                                           |
+| ------------------------------------- | -------------------------------------------------------------------- |
 | OOM on large outputs — 1–2 GB ceiling | Preflight estimate, ST routing for big jobs, explicit OOM error path |
-| Cancel costs a worker teardown | WASM cached, replacement pre-warmed, honest UI wording |
-| Progress events are unreliable | Sanitize and recompute against a probed duration |
-| 32 MB core download on first use | Idle prefetch into Cache API, brotli, clear loading state |
-| H.265 output may not play | Plain warning, never the default (D22) |
-| GPL obligations | Licenses footer, link to source |
-| Angular friction | Reassess at the Stage 4 checkpoint (D11) |
+| Cancel costs a worker teardown        | WASM cached, replacement pre-warmed, honest UI wording               |
+| Progress events are unreliable        | Sanitize and recompute against a probed duration                     |
+| 32 MB core download on first use      | Idle prefetch into Cache API, brotli, clear loading state            |
+| H.265 output may not play             | Plain warning, never the default (D22)                               |
+| GPL obligations                       | Licenses footer, link to source                                      |
+| Angular friction                      | Reassess at the Stage 4 checkpoint (D11)                             |

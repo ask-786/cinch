@@ -37,7 +37,9 @@ export class JobQueue {
 
   readonly waiting = computed(() => this.jobs().filter((job) => job.status === 'waiting'));
   readonly finished = computed(() =>
-    this.jobs().filter((job) => job.status === 'done' || job.status === 'failed' || job.status === 'cancelled'),
+    this.jobs().filter(
+      (job) => job.status === 'done' || job.status === 'failed' || job.status === 'cancelled',
+    ),
   );
   readonly isBusy = computed(() => this.activeId() !== undefined);
 

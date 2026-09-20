@@ -8,13 +8,16 @@ import type { MediaKind } from '../models/media-kind';
  */
 export function ffprobeArgs(inputPath: string, outputPath: string): readonly string[] {
   return [
-    '-v', 'error',
+    '-v',
+    'error',
     '-hide_banner',
-    '-print_format', 'json',
+    '-print_format',
+    'json',
     '-show_format',
     '-show_streams',
     inputPath,
-    '-o', outputPath,
+    '-o',
+    outputPath,
   ];
 }
 

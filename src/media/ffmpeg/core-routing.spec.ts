@@ -10,7 +10,9 @@ const capable: Capabilities = {
 
 describe('chooseCore', () => {
   it('takes the fast core for ordinary jobs', () => {
-    expect(chooseCore({ estimatedOutputBytes: 40_000_000, sourceHeight: 1080 }, capable)).toBe('mt');
+    expect(chooseCore({ estimatedOutputBytes: 40_000_000, sourceHeight: 1080 }, capable)).toBe(
+      'mt',
+    );
   });
 
   it('falls back when the page is not isolated', () => {
@@ -24,7 +26,9 @@ describe('chooseCore', () => {
   });
 
   it('avoids it for sources above 1080p', () => {
-    expect(chooseCore({ estimatedOutputBytes: 10_000_000, sourceHeight: 2160 }, capable)).toBe('st');
+    expect(chooseCore({ estimatedOutputBytes: 10_000_000, sourceHeight: 2160 }, capable)).toBe(
+      'st',
+    );
   });
 
   it('treats an unknown output size as a reason to be careful', () => {

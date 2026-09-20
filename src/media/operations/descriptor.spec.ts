@@ -60,7 +60,13 @@ const operation = defineOperation<Options>({
   ],
   // Mode b has no level, so it is pinned at the top of the range.
   normalize: (options) => (options.mode === 'b' ? { ...options, level: 10 } : options),
-  build: (options, paths) => ['-i', paths.inputPath, '-level', String(options.level), paths.outputPath],
+  build: (options, paths) => [
+    '-i',
+    paths.inputPath,
+    '-level',
+    String(options.level),
+    paths.outputPath,
+  ],
   outputExtension: () => 'mp4',
   outputMime: () => 'video/mp4',
 });

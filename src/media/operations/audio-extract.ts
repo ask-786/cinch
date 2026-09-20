@@ -87,7 +87,7 @@ export function buildAudioExtractArgs(
 export function audioBytesPerSecond(options: AudioExtractOptions): number | undefined {
   if (options.bitrate === 'copy') return undefined;
   if (options.format === 'wav') return 44_100 * 2 * 2; // 16-bit stereo at CD rate
-  if (options.format === 'flac') return Math.round((44_100 * 2 * 2) * 0.6);
+  if (options.format === 'flac') return Math.round(44_100 * 2 * 2 * 0.6);
   return (BITRATE_KBPS[options.bitrate] * 1000) / 8;
 }
 
@@ -156,10 +156,14 @@ export const audioExtract = defineOperation<AudioExtractOptions>({
     const source = context.info?.audioCodec;
 
     if (options.format === 'wav' && (context.info?.durationSeconds ?? 0) > 600) {
-      warnings.push('WAV keeps every sample, so an hour of audio is around 600 MB. FLAC sounds identical and is about half the size.');
+      warnings.push(
+        'WAV keeps every sample, so an hour of audio is around 600 MB. FLAC sounds identical and is about half the size.',
+      );
     }
     if (source && !isLossless(options.format) && options.bitrate !== 'copy') {
-      warnings.push(`The sound is already ${source.toUpperCase()}. Re-encoding it loses a little quality — "leave the sound alone" avoids that when the formats match.`);
+      warnings.push(
+        `The sound is already ${source.toUpperCase()}. Re-encoding it loses a little quality — "leave the sound alone" avoids that when the formats match.`,
+      );
     }
     return warnings;
   },

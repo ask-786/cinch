@@ -24,11 +24,19 @@ import {
       animation: rise 140ms cubic-bezier(0.2, 0, 0.2, 1);
     }
     @keyframes rise {
-      from { opacity: 0; transform: translateY(6px) scale(0.99); }
-      to { opacity: 1; transform: none; }
+      from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
-      dialog[open] { animation: none; }
+      dialog[open] {
+        animation: none;
+      }
     }
   `,
   template: `
@@ -49,7 +57,12 @@ import {
             class="-m-1.5 rounded-md p-1.5 text-faint transition-colors hover:bg-raised hover:text-ink"
           >
             <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path
+                d="m4 4 8 8M12 4l-8 8"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>

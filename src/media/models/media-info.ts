@@ -26,7 +26,10 @@ export interface MediaInfo {
  * ffprobe knows more than the browser's decoder, but the browser sometimes
  * answers when ffprobe declines. Prefer the deeper source field by field.
  */
-export function mergeInfo(native: MediaInfo | undefined, probed: MediaInfo | undefined): MediaInfo | undefined {
+export function mergeInfo(
+  native: MediaInfo | undefined,
+  probed: MediaInfo | undefined,
+): MediaInfo | undefined {
   if (!probed) return native;
   if (!native) return probed;
 

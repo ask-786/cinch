@@ -28,10 +28,14 @@ describe('buildVideoConvertArgs', () => {
   it('copies both streams by default, which is the whole point of a rewrap', () => {
     const args = buildVideoConvertArgs(options(), paths);
     expect(args).toEqual([
-      '-i', '/mnt1/in.mkv',
-      '-c:v', 'copy',
-      '-c:a', 'copy',
-      '-movflags', '+faststart',
+      '-i',
+      '/mnt1/in.mkv',
+      '-c:v',
+      'copy',
+      '-c:a',
+      'copy',
+      '-movflags',
+      '+faststart',
       '/out.mp4',
     ]);
   });
@@ -43,7 +47,10 @@ describe('buildVideoConvertArgs', () => {
   });
 
   it('gives VP9 the constant-quality pairing it needs', () => {
-    const args = buildVideoConvertArgs(options({ format: 'webm', video: 'vp9', audio: 'opus' }), paths);
+    const args = buildVideoConvertArgs(
+      options({ format: 'webm', video: 'vp9', audio: 'opus' }),
+      paths,
+    );
     expect(args).toContain('-b:v');
     expect(args[args.indexOf('-b:v') + 1]).toBe('0');
     expect(args).not.toContain('-movflags');
@@ -98,6 +105,8 @@ describe('the convert descriptor', () => {
   it('only claims to know the output size when both streams are copied', () => {
     const media = { size: 1234 } as never;
     expect(videoConvert.estimateBytes?.(options() as never, { media })).toBe(1234);
-    expect(videoConvert.estimateBytes?.(options({ video: 'h264' }) as never, { media })).toBeUndefined();
+    expect(
+      videoConvert.estimateBytes?.(options({ video: 'h264' }) as never, { media }),
+    ).toBeUndefined();
   });
 });

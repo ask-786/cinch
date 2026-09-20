@@ -15,7 +15,7 @@ describe('explainFailure', () => {
   });
 
   it('names a missing encoder rather than quoting it', () => {
-    const result = explainFailure({ logs: ['Unknown encoder \'libfdk_aac\''] });
+    const result = explainFailure({ logs: ["Unknown encoder 'libfdk_aac'"] });
     expect(result.kind).toBe('unsupported-codec');
     expect(result.title).not.toContain('libfdk_aac');
   });

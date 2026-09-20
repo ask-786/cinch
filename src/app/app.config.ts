@@ -8,5 +8,5 @@ export const appConfig: ApplicationConfig = {
     // Route params arrive as component inputs, so the operation screen can read
     // `:operation` as a signal rather than subscribing to the ActivatedRoute.
     provideRouter(routes, withComponentInputBinding()),
-  ]
+  ],
 };

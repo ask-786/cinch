@@ -110,10 +110,26 @@ function videoArgs(options: VideoCompressionOptions, info?: MediaInfo): string[]
       break;
     case 'h265':
       // hvc1 rather than hev1, or QuickTime and Safari refuse to play it.
-      args.push('-c:v', 'libx265', '-preset', preset(options), '-tag:v', 'hvc1', '-pix_fmt', 'yuv420p');
+      args.push(
+        '-c:v',
+        'libx265',
+        '-preset',
+        preset(options),
+        '-tag:v',
+        'hvc1',
+        '-pix_fmt',
+        'yuv420p',
+      );
       break;
     case 'vp9':
-      args.push('-c:v', 'libvpx-vp9', '-row-mt', '1', '-deadline', options.takeLonger ? 'good' : 'realtime');
+      args.push(
+        '-c:v',
+        'libvpx-vp9',
+        '-row-mt',
+        '1',
+        '-deadline',
+        options.takeLonger ? 'good' : 'realtime',
+      );
       break;
   }
 
@@ -268,7 +284,8 @@ export const videoCompress = defineOperation<VideoCompressionOptions>({
       min: 10,
       max: 95,
       visibleWhen: (options) => options.mode === 'quality',
-      display: (options) => `${options.quality} · CRF ${qualityToCrf(options.quality, options.codec)}`,
+      display: (options) =>
+        `${options.quality} · CRF ${qualityToCrf(options.quality, options.codec)}`,
       endLabels: ['Smaller file', 'Better picture'],
     },
     {
@@ -364,7 +381,9 @@ export const videoCompress = defineOperation<VideoCompressionOptions>({
     const info = context.info;
 
     if (options.mode === 'size' && info?.durationSeconds === undefined) {
-      warnings.push('Without the length of the file the target size cannot be turned into a bitrate, so quality will be used instead.');
+      warnings.push(
+        'Without the length of the file the target size cannot be turned into a bitrate, so quality will be used instead.',
+      );
     }
     if (options.audio !== 'none' && info?.hasAudio === false) {
       warnings.push('This file has no audio track, so the audio setting will not change anything.');
@@ -372,7 +391,9 @@ export const videoCompress = defineOperation<VideoCompressionOptions>({
 
     const estimate = estimateOutputBytes(options, info);
     if (estimate !== undefined && estimate > 2_000_000_000) {
-      warnings.push('The result would be over 2 GB, which is more than a browser tab can hold. Lower the quality or the resolution.');
+      warnings.push(
+        'The result would be over 2 GB, which is more than a browser tab can hold. Lower the quality or the resolution.',
+      );
     }
     return warnings;
   },

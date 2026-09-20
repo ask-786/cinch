@@ -4,8 +4,8 @@
       Media tools that never leave your device
     </h1>
     <p class="mx-auto mt-4 max-w-xl text-pretty text-base text-muted">
-      Compress a video, pull the audio out of it, cut a clip, make a GIF. Everything happens
-      inside this browser tab — your file is never uploaded anywhere.
+      Compress a video, pull the audio out of it, cut a clip, make a GIF. Everything happens inside
+      this browser tab — your file is never uploaded anywhere.
     </p>
   </section>
 }
@@ -68,8 +68,8 @@
 
       <p class="mt-4 text-sm text-muted">
         @if (isMultiple()) {
-          Several files are selected. Each operation runs on one of them — pick the file on the
-          next screen. The combine operations arrive with the rest of Stage 6.
+          Several files are selected. Each operation runs on one of them — pick the file on the next
+          screen. The combine operations arrive with the rest of Stage 6.
         } @else {
           Still to come: {{ comingSoon.join(', ') }}.
         }
@@ -82,7 +82,9 @@
       <div class="flex items-start justify-between gap-4">
         <div class="min-w-0">
           <p class="text-sm font-medium text-ink">
-            {{ selection.rejected().length === 1 ? 'One file was skipped' : 'Some files were skipped' }}
+            {{
+              selection.rejected().length === 1 ? 'One file was skipped' : 'Some files were skipped'
+            }}
           </p>
           <ul class="mt-2 space-y-1.5 text-sm text-muted">
             @for (item of selection.rejected(); track item.name) {
@@ -100,7 +102,12 @@
           class="-m-1.5 shrink-0 rounded-md p-1.5 text-faint transition-colors hover:text-ink"
         >
           <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path
+              d="m4 4 8 8M12 4l-8 8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -113,7 +120,9 @@
 </div>
 
 @if (selection.isEmpty()) {
-  <section class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+  <section
+    class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
+  >
     @for (group of catalogue; track group.group) {
       <div class="bg-surface p-5">
         <h2 class="text-sm font-semibold text-ink">{{ group.label }}</h2>
@@ -138,8 +147,8 @@
     <div>
       <h3 class="text-sm font-semibold text-ink">No upload</h3>
       <p class="mt-1.5 text-sm text-muted">
-        The conversion runs on your own processor, in this tab. There is no server to send
-        anything to.
+        The conversion runs on your own processor, in this tab. There is no server to send anything
+        to.
       </p>
     </div>
     <div>
@@ -152,7 +161,9 @@
       <h3 class="text-sm font-semibold text-ink">Real FFmpeg</h3>
       <p class="mt-1.5 text-sm text-muted">
         The same tool the pros use, compiled to WebAssembly.
-        <a routerLink="/about" class="text-accent underline-offset-2 hover:underline">How it works</a>.
+        <a routerLink="/about" class="text-accent underline-offset-2 hover:underline"
+          >How it works</a
+        >.
       </p>
     </div>
   </section>

@@ -155,7 +155,10 @@ export class JobRunner {
     const command = spec.build({ inputPath: input.path, outputPath });
     // The thread count is the core's business, so it is added here rather than
     // by the operation — the command we show the user stays paste-able.
-    const args = withThreads(command, threadArgs(variant, this.client.capabilities.hardwareConcurrency));
+    const args = withThreads(
+      command,
+      threadArgs(variant, this.client.capabilities.hardwareConcurrency),
+    );
 
     const tracker = new ProgressTracker(spec.durationSeconds);
     this.patch({ phase: 'running', variant, coreNote });

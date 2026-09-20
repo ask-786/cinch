@@ -34,7 +34,13 @@ const STATUS_CLASSES: Readonly<Record<QueuedJob['status'], string>> = {
         <div class="flex items-baseline justify-between gap-4">
           <h2 class="text-sm font-semibold text-ink">{{ heading() }}</h2>
           @if (queue.finished().length > 0) {
-            <button appButton variant="ghost" size="sm" type="button" (click)="queue.clearFinished()">
+            <button
+              appButton
+              variant="ghost"
+              size="sm"
+              type="button"
+              (click)="queue.clearFinished()"
+            >
               Clear finished
             </button>
           }
@@ -55,11 +61,23 @@ const STATUS_CLASSES: Readonly<Record<QueuedJob['status'], string>> = {
                   {{ saved().has(job.id) ? 'Saved' : 'Save' }}
                 </button>
               } @else if (job.status === 'waiting' || job.status === 'running') {
-                <button appButton variant="ghost" size="sm" type="button" (click)="queue.cancel(job.id)">
+                <button
+                  appButton
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  (click)="queue.cancel(job.id)"
+                >
                   Stop
                 </button>
               } @else {
-                <button appButton variant="ghost" size="sm" type="button" (click)="queue.remove(job.id)">
+                <button
+                  appButton
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  (click)="queue.remove(job.id)"
+                >
                   Remove
                 </button>
               }

@@ -55,7 +55,14 @@ import { Button, Slider } from '../../components/ui';
             [display]="clock(start())"
             (valueChange)="setStart($event)"
           />
-          <button appButton variant="secondary" size="sm" type="button" class="mt-2" (click)="startHere()">
+          <button
+            appButton
+            variant="secondary"
+            size="sm"
+            type="button"
+            class="mt-2"
+            (click)="startHere()"
+          >
             Start here
           </button>
         </div>
@@ -70,7 +77,14 @@ import { Button, Slider } from '../../components/ui';
             [display]="clock(end())"
             (valueChange)="setEnd($event)"
           />
-          <button appButton variant="secondary" size="sm" type="button" class="mt-2" (click)="endHere()">
+          <button
+            appButton
+            variant="secondary"
+            size="sm"
+            type="button"
+            class="mt-2"
+            (click)="endHere()"
+          >
             End here
           </button>
         </div>
