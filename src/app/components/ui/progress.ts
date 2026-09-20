@@ -9,12 +9,20 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     @keyframes drift {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(400%); }
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(400%);
+      }
     }
-    .drift { animation: drift 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+    .drift {
+      animation: drift 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
     @media (prefers-reduced-motion: reduce) {
-      .drift { animation-duration: 3s; }
+      .drift {
+        animation-duration: 3s;
+      }
     }
   `,
   template: `

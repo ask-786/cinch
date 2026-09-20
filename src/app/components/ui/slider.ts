@@ -26,7 +26,9 @@ import { ChangeDetectionStrategy, Component, computed, input, model } from '@ang
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
       cursor: grab;
     }
-    input[type='range']::-webkit-slider-thumb:active { cursor: grabbing; }
+    input[type='range']::-webkit-slider-thumb:active {
+      cursor: grabbing;
+    }
     input[type='range']::-moz-range-thumb {
       width: 1.125rem;
       height: 1.125rem;
@@ -35,7 +37,9 @@ import { ChangeDetectionStrategy, Component, computed, input, model } from '@ang
       border: 2px solid var(--accent);
       cursor: grab;
     }
-    input[type='range']:disabled { opacity: 0.5; }
+    input[type='range']:disabled {
+      opacity: 0.5;
+    }
   `,
   template: `
     <div class="flex items-baseline justify-between gap-4">

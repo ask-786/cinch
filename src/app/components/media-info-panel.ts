@@ -25,22 +25,61 @@ import { Disclosure } from './ui';
           <svg class="size-[1.125rem]" viewBox="0 0 20 20" fill="none">
             @switch (media().kind) {
               @case ('video') {
-                <rect x="2.5" y="4.5" width="15" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
+                <rect
+                  x="2.5"
+                  y="4.5"
+                  width="15"
+                  height="11"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
                 <path d="m8.5 8 4 2-4 2V8Z" fill="currentColor" />
               }
               @case ('audio') {
-                <path d="M7.5 12.5V4.5l7-1.5v8" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                <path
+                  d="M7.5 12.5V4.5l7-1.5v8"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                />
                 <circle cx="5.75" cy="13.5" r="2.25" stroke="currentColor" stroke-width="1.5" />
                 <circle cx="12.75" cy="12" r="2.25" stroke="currentColor" stroke-width="1.5" />
               }
               @case ('image') {
-                <rect x="2.5" y="3.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.5" />
+                <rect
+                  x="2.5"
+                  y="3.5"
+                  width="15"
+                  height="13"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
                 <circle cx="7" cy="8" r="1.25" fill="currentColor" />
-                <path d="m3.5 14 4-4 3.5 3.5 2.5-2 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                <path
+                  d="m3.5 14 4-4 3.5 3.5 2.5-2 3 2.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                />
               }
               @default {
-                <rect x="3.5" y="3" width="13" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
-                <path d="M6.5 8.5h7M6.5 11.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <rect
+                  x="3.5"
+                  y="3"
+                  width="13"
+                  height="14"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M6.5 8.5h7M6.5 11.5h4"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
               }
             }
           </svg>
@@ -67,7 +106,12 @@ import { Disclosure } from './ui';
           class="-m-1.5 rounded-md p-1.5 text-faint transition-colors hover:bg-raised hover:text-ink"
         >
           <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path
+              d="m4 4 8 8M12 4l-8 8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -96,8 +140,8 @@ import { Disclosure } from './ui';
             </p>
           } @else if (info()?.source !== 'ffprobe') {
             <p class="mt-2 text-xs text-faint">
-              These come from the browser's own decoder. FFmpeg can say more — it needs to
-              download once, about 32 MB.
+              These come from the browser's own decoder. FFmpeg can say more — it needs to download
+              once, about 32 MB.
             </p>
           }
         </app-disclosure>

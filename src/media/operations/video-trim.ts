@@ -97,7 +97,9 @@ export const videoTrim = defineOperation<VideoTrimOptions>({
       warnings.push('The end of the clip is not after its start, so there is nothing to keep.');
     }
     if (!options.exact) {
-      warnings.push('Copying can only cut on a keyframe, so the clip may begin up to a couple of seconds early. Turn on "cut exactly" to land on the frame.');
+      warnings.push(
+        'Copying can only cut on a keyframe, so the clip may begin up to a couple of seconds early. Turn on "cut exactly" to land on the frame.',
+      );
     }
     if (context.info?.durationSeconds === undefined) {
       warnings.push('The length of this file is still being read.');

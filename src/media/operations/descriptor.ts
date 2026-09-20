@@ -34,8 +34,7 @@ export interface Choice {
 }
 
 type Choices<O extends OptionValues> =
-  | readonly Choice[]
-  | ((options: O, context: OperationContext) => readonly Choice[]);
+  readonly Choice[] | ((options: O, context: OperationContext) => readonly Choice[]);
 
 interface FieldCommon<O extends OptionValues> {
   readonly key: keyof O & string;
@@ -82,11 +81,7 @@ export interface ToggleField<O extends OptionValues> extends FieldCommon<O> {
 }
 
 export type Field<O extends OptionValues> =
-  | SelectField<O>
-  | SegmentedField<O>
-  | ChipsField<O>
-  | SliderField<O>
-  | ToggleField<O>;
+  SelectField<O> | SegmentedField<O> | ChipsField<O> | SliderField<O> | ToggleField<O>;
 
 export type OperationGroup = 'video' | 'audio' | 'image' | 'subtitle';
 

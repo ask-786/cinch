@@ -117,6 +117,8 @@
 @layer utilities {
   /* Suppresses the theme flash-swap while the stored preference is applied. */
   .theme-ready {
-    transition: background-color 150ms ease, color 150ms ease;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
   }
 }

@@ -100,13 +100,44 @@ export function buildVideoConvertArgs(
       args.push('-c:v', 'copy');
       break;
     case 'h264':
-      args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', String(convertCrf(options.quality, 'h264')), '-pix_fmt', 'yuv420p');
+      args.push(
+        '-c:v',
+        'libx264',
+        '-preset',
+        'veryfast',
+        '-crf',
+        String(convertCrf(options.quality, 'h264')),
+        '-pix_fmt',
+        'yuv420p',
+      );
       break;
     case 'h265':
-      args.push('-c:v', 'libx265', '-preset', 'veryfast', '-crf', String(convertCrf(options.quality, 'h265')), '-tag:v', 'hvc1', '-pix_fmt', 'yuv420p');
+      args.push(
+        '-c:v',
+        'libx265',
+        '-preset',
+        'veryfast',
+        '-crf',
+        String(convertCrf(options.quality, 'h265')),
+        '-tag:v',
+        'hvc1',
+        '-pix_fmt',
+        'yuv420p',
+      );
       break;
     case 'vp9':
-      args.push('-c:v', 'libvpx-vp9', '-row-mt', '1', '-deadline', 'realtime', '-crf', String(convertCrf(options.quality, 'vp9')), '-b:v', '0');
+      args.push(
+        '-c:v',
+        'libvpx-vp9',
+        '-row-mt',
+        '1',
+        '-deadline',
+        'realtime',
+        '-crf',
+        String(convertCrf(options.quality, 'vp9')),
+        '-b:v',
+        '0',
+      );
       break;
   }
 
@@ -147,7 +178,10 @@ function videoChoices(format: ContainerFormat, info: MediaInfo | undefined): rea
       note: copyable ? 'fastest' : 'not possible in this container',
       disabled: !copyable,
     },
-    ...CONTAINER_VIDEO[format].map((codec) => ({ value: codec, label: `Re-encode as ${labels[codec]}` })),
+    ...CONTAINER_VIDEO[format].map((codec) => ({
+      value: codec,
+      label: `Re-encode as ${labels[codec]}`,
+    })),
   ];
 }
 
@@ -227,13 +261,21 @@ export const videoConvert = defineOperation<VideoConvertOptions>({
     const format = options.format;
 
     let video = options.video;
-    if (video === 'copy' ? !canCopyVideo(format, context.info) : !CONTAINER_VIDEO[format].includes(video)) {
+    if (
+      video === 'copy'
+        ? !canCopyVideo(format, context.info)
+        : !CONTAINER_VIDEO[format].includes(video)
+    ) {
       video = CONTAINER_VIDEO[format][0];
     }
 
     let audio = options.audio;
     const audioAllowed = CONTAINER_AUDIO[format];
-    if (audio === 'copy' ? !canCopyAudio(format, context.info) : audio !== 'none' && !audioAllowed.includes(audio)) {
+    if (
+      audio === 'copy'
+        ? !canCopyAudio(format, context.info)
+        : audio !== 'none' && !audioAllowed.includes(audio)
+    ) {
       audio = audioAllowed.find((track) => track !== 'copy') ?? 'none';
     }
 
@@ -243,7 +285,9 @@ export const videoConvert = defineOperation<VideoConvertOptions>({
   preflight: (options, context) => {
     const warnings: string[] = [];
     if (options.video === 'copy' && options.audio === 'copy') {
-      warnings.push('Both streams are being copied, so this only rewraps the file. It will take seconds and the picture will be identical.');
+      warnings.push(
+        'Both streams are being copied, so this only rewraps the file. It will take seconds and the picture will be identical.',
+      );
     }
     if (options.video === 'h265' && options.format === 'mkv') {
       warnings.push('H.265 in MKV plays in VLC and little else. MP4 is the safer home for it.');

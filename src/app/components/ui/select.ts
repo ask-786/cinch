@@ -39,9 +39,17 @@ export interface SelectOption<T extends string = string> {
       </select>
       <svg
         class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-faint"
-        viewBox="0 0 16 16" fill="none" aria-hidden="true"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
       >
-        <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path
+          d="m4 6 4 4 4-4"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </svg>
     </div>
     @if (hint(); as text) {

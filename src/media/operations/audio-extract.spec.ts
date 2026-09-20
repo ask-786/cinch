@@ -79,7 +79,9 @@ describe('the extract descriptor', () => {
   });
 
   it('estimates from the bitrate and the duration', () => {
-    const bytes = audioExtract.estimateBytes?.(options({ bitrate: 'good' }) as never, { info: aacInfo });
+    const bytes = audioExtract.estimateBytes?.(options({ bitrate: 'good' }) as never, {
+      info: aacInfo,
+    });
     // 192 kbps for two minutes.
     expect(bytes).toBe(Math.round((192_000 / 8) * 120));
   });
@@ -93,9 +95,10 @@ describe('the extract descriptor', () => {
   });
 
   it('warns about a long WAV before it fills the tab', () => {
-    const warnings = audioExtract.preflight?.(options({ format: 'wav' }) as never, {
-      info: { ...aacInfo, durationSeconds: 3600 },
-    }) ?? [];
+    const warnings =
+      audioExtract.preflight?.(options({ format: 'wav' }) as never, {
+        info: { ...aacInfo, durationSeconds: 3600 },
+      }) ?? [];
     expect(warnings.join(' ')).toMatch(/FLAC/);
   });
 });
