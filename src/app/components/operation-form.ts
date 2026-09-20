@@ -11,7 +11,7 @@ import {
   type OptionValue,
   type OptionValues,
 } from '../../media/operations/descriptor';
-import { Select, Slider, type SelectOption } from './ui';
+import { Select, Slider, TextInput, type SelectOption } from './ui';
 
 interface FieldView {
   readonly field: Field<OptionValues>;
@@ -34,7 +34,7 @@ interface FieldView {
 @Component({
   selector: 'app-operation-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Select, Slider],
+  imports: [Select, Slider, TextInput],
   template: `
     <div class="grid gap-5 sm:grid-cols-2">
       @for (view of views(); track view.field.key + view.field.kind) {
@@ -108,6 +108,29 @@ interface FieldView {
               />
             }
 
+            @case ('number') {
+              <app-text-input
+                type="number"
+                [label]="view.field.label"
+                [value]="asTyped(view.value)"
+                [min]="view.field.min"
+                [max]="view.field.max"
+                [step]="view.field.step ?? 1"
+                [suffix]="view.field.suffix ?? ''"
+                [placeholder]="view.field.placeholder ?? ''"
+                (valueChange)="set(view.field.key, $event)"
+              />
+            }
+
+            @case ('text') {
+              <app-text-input
+                [label]="view.field.label"
+                [value]="asTyped(view.value)"
+                [placeholder]="view.field.placeholder ?? ''"
+                (valueChange)="set(view.field.key, $event)"
+              />
+            }
+
             @case ('toggle') {
               <label class="flex cursor-pointer items-center gap-2.5">
                 <input
@@ -162,7 +185,7 @@ export class OperationForm {
         value,
         display: field.kind === 'slider' && field.display ? field.display(options, context) : '',
         warning: field.warnWhen?.(options, context),
-        full: field.kind !== 'select',
+        full: field.kind !== 'select' && field.kind !== 'number' && field.kind !== 'text',
       };
     });
   });
@@ -177,5 +200,10 @@ export class OperationForm {
 
   protected asNumber(value: OptionValue): number {
     return typeof value === 'number' ? value : 0;
+  }
+
+  /** Typed-in fields hold text or a number; a boolean never reaches one. */
+  protected asTyped(value: OptionValue): string | number | undefined {
+    return typeof value === 'boolean' ? undefined : value;
   }
 }

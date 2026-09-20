@@ -4,3 +4,4 @@ export { Disclosure } from './disclosure';
 export { Progress } from './progress';
 export { Select, type SelectOption } from './select';
 export { Slider } from './slider';
+export { TextInput } from './text-input';

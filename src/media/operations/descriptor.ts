@@ -80,8 +80,36 @@ export interface ToggleField<O extends OptionValues> extends FieldCommon<O> {
   readonly kind: 'toggle';
 }
 
+/**
+ * A typed-in number, for the values no list of choices can cover — a width, a
+ * frame rate, a bitrate. An empty box reads as `undefined`, so a field can
+ * mean "leave this alone" without needing a separate toggle.
+ */
+export interface NumberField<O extends OptionValues> extends FieldCommon<O> {
+  readonly kind: 'number';
+  readonly min?: number;
+  readonly max?: number;
+  readonly step?: number;
+  /** Shown inside the box: "px", "fps", "kbps". */
+  readonly suffix?: string;
+  readonly placeholder?: string;
+}
+
+/** A typed-in line of text — a watermark caption, a title. */
+export interface TextField<O extends OptionValues> extends FieldCommon<O> {
+  readonly kind: 'text';
+  readonly placeholder?: string;
+  readonly maxLength?: number;
+}
+
 export type Field<O extends OptionValues> =
-  SelectField<O> | SegmentedField<O> | ChipsField<O> | SliderField<O> | ToggleField<O>;
+  | SelectField<O>
+  | SegmentedField<O>
+  | ChipsField<O>
+  | SliderField<O>
+  | ToggleField<O>
+  | NumberField<O>
+  | TextField<O>;
 
 export type OperationGroup = 'video' | 'audio' | 'image' | 'subtitle';
 
@@ -140,7 +168,8 @@ export function choicesOf(
   options: OptionValues,
   context: OperationContext,
 ): readonly Choice[] {
-  if (field.kind === 'slider' || field.kind === 'toggle') return [];
+  // Sliders, toggles and typed-in fields have no list to offer.
+  if (!('choices' in field)) return [];
   return typeof field.choices === 'function' ? field.choices(options, context) : field.choices;
 }
 
