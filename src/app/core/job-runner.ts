@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { chooseCore, explainCoreChoice, type CoreVariant } from '../../media/ffmpeg/core-routing';
+import { explainFailure, type Explanation } from '../../media/ffmpeg/errors';
 import { ProgressTracker } from '../../media/ffmpeg/progress';
 import { threadArgs } from '../../media/ffmpeg/threads';
 import type { MediaFile } from '../../media/models/media-file';
@@ -31,7 +32,8 @@ export interface JobState {
   readonly elapsedMs: number;
   readonly variant?: CoreVariant;
   readonly coreNote?: string;
-  readonly message?: string;
+  /** Why it failed, in the user's words (D17). Set only in the error phase. */
+  readonly failure?: Explanation;
 }
 
 export interface JobResult {
@@ -74,6 +76,8 @@ export class JobRunner {
 
     this.cancelled = false;
     this.result.set(undefined);
+    // A fresh run starts from IDLE so no failure or ratio survives into it.
+    this.state.set({ ...IDLE, phase: 'loading' });
     this.client.clearLogs();
 
     const startedAt = performance.now();
@@ -99,7 +103,11 @@ export class JobRunner {
       this.patch({
         phase: 'error',
         elapsedMs: performance.now() - startedAt,
-        message: describe(error),
+        failure: explainFailure({
+          error,
+          exitCode: error instanceof FfmpegExitError ? error.code : undefined,
+          logs: this.client.logs(),
+        }),
       });
       return undefined;
     } finally {
@@ -233,10 +241,4 @@ function withThreads(command: readonly string[], threads: readonly string[]): st
 function extensionOf(name: string): string {
   const dot = name.lastIndexOf('.');
   return dot > 0 ? name.slice(dot + 1) : 'out';
-}
-
-function describe(error: unknown): string {
-  if (error instanceof FfmpegExitError) return error.message;
-  if (error instanceof Error) return error.message;
-  return String(error);
 }

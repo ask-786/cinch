@@ -1,21 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { chooseCore } from '../../../media/ffmpeg/core-routing';
+import type { MediaKind } from '../../../media/models/media-kind';
+import { groupOperations, operationsFor, OPERATIONS } from '../../../media/operations/registry';
 import { DropZone } from '../../components/drop-zone';
+import { JobList } from '../../components/job-list';
 import { MediaInfoPanel } from '../../components/media-info-panel';
 import { Button } from '../../components/ui';
 import { FfmpegClient } from '../../core/ffmpeg-client';
 import { Selection } from '../../core/selection';
 
-interface Capability {
-  readonly title: string;
-  readonly items: readonly string[];
-}
-
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, DropZone, MediaInfoPanel, RouterLink],
+  imports: [Button, DropZone, JobList, MediaInfoPanel, RouterLink],
   templateUrl: './home.html',
 })
 export class Home {
@@ -24,7 +22,7 @@ export class Home {
 
   constructor() {
     // A file on screen means a job is likely. Pull the core down while the
-    // user reads, so the first Compress click is not a 32 MB wait.
+    // user reads, so the first click is not a 32 MB wait.
     effect(() => {
       if (this.selection.isEmpty()) return;
       const height = this.selection
@@ -39,12 +37,23 @@ export class Home {
 
   /** Dropping several files is how the combine operations are discovered (D24). */
   protected readonly isMultiple = computed(() => this.selection.count() > 1);
-  protected readonly hasVideo = computed(() => this.selection.files().some((f) => f.kind === 'video'));
 
-  protected readonly capabilities: readonly Capability[] = [
-    { title: 'Video', items: ['Compress', 'Convert', 'Resize', 'Crop', 'Trim', 'Change frame rate'] },
-    { title: 'Audio', items: ['Extract from video', 'Convert', 'Trim', 'Volume', 'Fade', 'Merge'] },
-    { title: 'Images & GIF', items: ['Frames from video', 'Make a GIF', 'Thumbnails', 'Images to video'] },
-    { title: 'Subtitles', items: ['Extract', 'Convert', 'Burn into the picture'] },
+  private readonly kinds = computed<readonly MediaKind[]>(() => [
+    ...new Set(this.selection.files().map((file) => file.kind)),
+  ]);
+
+  /** What can be done with what is on screen, straight from the registry. */
+  protected readonly available = computed(() => groupOperations(operationsFor(this.kinds())));
+
+  /** Everything Cinch can do, for the empty state's list. */
+  protected readonly catalogue = groupOperations(OPERATIONS);
+
+  protected readonly comingSoon: readonly string[] = [
+    'Resize',
+    'Crop',
+    'Change frame rate',
+    'Make a GIF',
+    'Extract frames',
+    'Burn in subtitles',
   ];
 }

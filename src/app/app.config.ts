@@ -1,10 +1,12 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes)
+    // Route params arrive as component inputs, so the operation screen can read
+    // `:operation` as a signal rather than subscribing to the ActivatedRoute.
+    provideRouter(routes, withComponentInputBinding()),
   ]
 };

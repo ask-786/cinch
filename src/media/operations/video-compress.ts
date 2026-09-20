@@ -1,11 +1,14 @@
 import type { MediaInfo } from '../models/media-info';
+import { defineOperation, type Choice } from './descriptor';
 
 export type VideoFormat = 'mp4' | 'webm' | 'mkv' | 'mov';
 export type VideoCodec = 'h264' | 'h265' | 'vp9';
 export type AudioQuality = 'small' | 'good' | 'high' | 'none';
 export type CompressionMode = 'quality' | 'size';
 
-export interface VideoCompressionOptions {
+// A type alias rather than an interface: only aliases get the implicit index
+// signature that lets them satisfy `OptionValues` in the registry.
+export type VideoCompressionOptions = {
   readonly mode: CompressionMode;
   /** 0–100. Higher means better looking and bigger. */
   readonly quality: number;
@@ -18,7 +21,7 @@ export interface VideoCompressionOptions {
   readonly takeLonger: boolean;
   /** Downscale to this height, keeping the aspect ratio. */
   readonly maxHeight?: number;
-}
+};
 
 export const DEFAULT_COMPRESSION: VideoCompressionOptions = {
   mode: 'quality',
@@ -27,6 +30,10 @@ export const DEFAULT_COMPRESSION: VideoCompressionOptions = {
   codec: 'h264',
   audio: 'good',
   takeLonger: false,
+  // Present and undefined rather than absent: every field a descriptor names
+  // has to exist in its defaults, or the generated form binds to nothing.
+  targetBytes: undefined,
+  maxHeight: undefined,
 };
 
 /**
@@ -201,11 +208,183 @@ export function estimateOutputBytes(
   return Math.round(((videoBps + audioBps) * duration) / 8);
 }
 
-/**
- * The command a person could paste into a terminal (D21). Build the args with
- * the real file names as paths and this just quotes and joins them.
- */
-export function toShellCommand(args: readonly string[]): string {
-  const quoted = args.map((arg) => (/[\s'"*?$&|<>()]/.test(arg) ? `'${arg.split(`'`).join(`'\\''`)}'` : arg));
-  return `ffmpeg ${quoted.join(' ')}`;
+/* ---------- descriptor ---------- */
+
+const MIME: Readonly<Record<VideoFormat, string>> = {
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mkv: 'video/x-matroska',
+  mov: 'video/quicktime',
+};
+
+const CODEC_LABELS: Readonly<Record<VideoCodec, string>> = {
+  h264: 'H.264',
+  h265: 'H.265',
+  vp9: 'VP9',
+};
+
+const CODEC_NOTES: Readonly<Record<VideoCodec, string>> = {
+  h264: 'plays everywhere',
+  h265: 'smaller, fussier',
+  vp9: 'smaller, web only',
+};
+
+const HEIGHTS = [1080, 720, 480, 360] as const;
+
+function heightChoices(info: MediaInfo | undefined): readonly Choice[] {
+  const source = info?.height;
+  const usable = source ? HEIGHTS.filter((height) => height < source) : HEIGHTS;
+  return [
+    { value: undefined, label: source ? `Keep ${source}p` : 'Keep the original size' },
+    ...usable.map((height) => ({ value: height, label: `${height}p` })),
+  ];
 }
+
+export const videoCompress = defineOperation<VideoCompressionOptions>({
+  id: 'video-compress',
+  route: 'compress',
+  title: 'Compress video',
+  verb: 'Compress',
+  summary: 'Make the file smaller, by quality or to hit a size.',
+  group: 'video',
+  accepts: ['video'],
+  defaults: DEFAULT_COMPRESSION,
+  outputSuffix: 'compressed',
+
+  fields: [
+    {
+      kind: 'segmented',
+      key: 'mode',
+      label: 'How to decide the size',
+      choices: [
+        { value: 'quality', label: 'By quality' },
+        { value: 'size', label: 'By file size' },
+      ],
+    },
+    {
+      kind: 'slider',
+      key: 'quality',
+      label: 'Quality',
+      min: 10,
+      max: 95,
+      visibleWhen: (options) => options.mode === 'quality',
+      display: (options) => `${options.quality} · CRF ${qualityToCrf(options.quality, options.codec)}`,
+      endLabels: ['Smaller file', 'Better picture'],
+    },
+    {
+      kind: 'chips',
+      key: 'quality',
+      label: 'Presets',
+      visibleWhen: (options) => options.mode === 'quality',
+      choices: [
+        { value: 35, label: 'Small' },
+        { value: 60, label: 'Balanced' },
+        { value: 80, label: 'High' },
+      ],
+    },
+    {
+      kind: 'chips',
+      key: 'targetBytes',
+      label: 'Target size',
+      visibleWhen: (options) => options.mode === 'size',
+      hint: 'The encoder aims for this. Expect to land a little under.',
+      warnWhen: (_options, context) =>
+        context.info?.durationSeconds === undefined
+          ? 'The length of this file is still being read. Targeting a size needs it.'
+          : undefined,
+      choices: [
+        { value: 10_000_000, label: '10 MB', note: 'Discord' },
+        { value: 25_000_000, label: '25 MB', note: 'Email' },
+        { value: 50_000_000, label: '50 MB' },
+        { value: 100_000_000, label: '100 MB' },
+      ],
+    },
+    {
+      kind: 'select',
+      key: 'format',
+      label: 'Format',
+      choices: [
+        { value: 'mp4', label: 'MP4', note: 'plays everywhere' },
+        { value: 'webm', label: 'WebM', note: 'smaller, web only' },
+        { value: 'mkv', label: 'MKV', note: 'anything goes' },
+        { value: 'mov', label: 'MOV', note: 'QuickTime' },
+      ],
+    },
+    {
+      kind: 'select',
+      key: 'codec',
+      label: 'Video codec',
+      choices: (options) =>
+        FORMAT_CODECS[options.format].map((codec) => ({
+          value: codec,
+          label: CODEC_LABELS[codec],
+          note: CODEC_NOTES[codec],
+        })),
+      warnWhen: (options) =>
+        options.codec === 'h265'
+          ? 'H.265 makes smaller files, but some players and older phones will not open them. Pick H.264 if the file has to work anywhere.'
+          : undefined,
+    },
+    {
+      kind: 'select',
+      key: 'maxHeight',
+      label: 'Resolution',
+      choices: (_options, context) => heightChoices(context.info),
+    },
+    {
+      kind: 'select',
+      key: 'audio',
+      label: 'Audio',
+      choices: [
+        { value: 'small', label: 'Smaller', note: '96 kbps' },
+        { value: 'good', label: 'Good', note: '128 kbps' },
+        { value: 'high', label: 'High', note: '192 kbps' },
+        { value: 'none', label: 'Remove the audio' },
+      ],
+    },
+    {
+      kind: 'toggle',
+      key: 'takeLonger',
+      label: 'Take longer for a smaller file',
+    },
+  ],
+
+  normalize: (options) => {
+    // The container decides which codecs are even possible.
+    const allowed = FORMAT_CODECS[options.format];
+    const codec = allowed.includes(options.codec) ? options.codec : allowed[0];
+    // Targeting a size is meaningless without a target.
+    const targetBytes =
+      options.mode === 'size' ? (options.targetBytes ?? 25_000_000) : options.targetBytes;
+    return { ...options, codec, targetBytes };
+  },
+
+  preflight: (options, context) => {
+    const warnings: string[] = [];
+    const info = context.info;
+
+    if (options.mode === 'size' && info?.durationSeconds === undefined) {
+      warnings.push('Without the length of the file the target size cannot be turned into a bitrate, so quality will be used instead.');
+    }
+    if (options.audio !== 'none' && info?.hasAudio === false) {
+      warnings.push('This file has no audio track, so the audio setting will not change anything.');
+    }
+
+    const estimate = estimateOutputBytes(options, info);
+    if (estimate !== undefined && estimate > 2_000_000_000) {
+      warnings.push('The result would be over 2 GB, which is more than a browser tab can hold. Lower the quality or the resolution.');
+    }
+    return warnings;
+  },
+
+  build: (options, paths, context) =>
+    buildVideoCompressionArgs(options, {
+      inputPath: paths.inputPath,
+      outputPath: paths.outputPath,
+      info: context.info,
+    }),
+
+  outputExtension: (options) => options.format,
+  outputMime: (options) => MIME[options.format],
+  estimateBytes: (options, context) => estimateOutputBytes(options, context.info),
+});

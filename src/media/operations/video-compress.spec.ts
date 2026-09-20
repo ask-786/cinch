@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { MediaInfo } from '../models/media-info';
+import { toShellCommand } from './descriptor';
 import {
   buildVideoCompressionArgs,
   DEFAULT_COMPRESSION,
   estimateOutputBytes,
   qualityToCrf,
-  toShellCommand,
   videoBitrateBps,
   type VideoCompressionOptions,
 } from './video-compress';

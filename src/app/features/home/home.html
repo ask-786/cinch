@@ -46,28 +46,32 @@
       />
     </div>
 
-    <!-- Stage 5 turns this into the full operation registry. -->
     <div class="mt-6 rounded-card border border-line bg-surface p-5">
       <h2 class="text-sm font-semibold text-ink">What would you like to do?</h2>
-      @if (hasVideo()) {
-        <a
-          appButton
-          variant="primary"
-          size="md"
-          routerLink="/compress"
-          class="mt-3 w-full sm:w-auto"
-        >
-          Compress the video
-        </a>
+
+      @for (group of available(); track group.group) {
+        <div class="mt-4">
+          <p class="text-xs font-medium uppercase tracking-wide text-faint">{{ group.label }}</p>
+          <div class="mt-2 grid gap-2 sm:grid-cols-2">
+            @for (operation of group.operations; track operation.id) {
+              <a
+                [routerLink]="['/', operation.route]"
+                class="rounded-lg border border-line p-3 transition-colors hover:border-line-strong hover:bg-raised"
+              >
+                <span class="block text-sm font-medium text-ink">{{ operation.title }}</span>
+                <span class="mt-0.5 block text-xs text-muted">{{ operation.summary }}</span>
+              </a>
+            }
+          </div>
+        </div>
       }
-      <p class="mt-3 text-sm text-muted">
+
+      <p class="mt-4 text-sm text-muted">
         @if (isMultiple()) {
-          Several files are selected, so the combine operations — join clips, merge audio,
-          images into video — will show up here.
-        } @else if (!hasVideo()) {
-          The audio, image and subtitle operations are next.
+          Several files are selected. Each operation runs on one of them — pick the file on the
+          next screen. The combine operations arrive with the rest of Stage 6.
         } @else {
-          The rest of the operations arrive in the next stage.
+          Still to come: {{ comingSoon.join(', ') }}.
         }
       </p>
     </div>
@@ -104,18 +108,30 @@
   }
 </section>
 
+<div class="mt-6">
+  <app-job-list heading="Jobs" />
+</div>
+
 @if (selection.isEmpty()) {
   <section class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-    @for (group of capabilities; track group.title) {
+    @for (group of catalogue; track group.group) {
       <div class="bg-surface p-5">
-        <h2 class="text-sm font-semibold text-ink">{{ group.title }}</h2>
+        <h2 class="text-sm font-semibold text-ink">{{ group.label }}</h2>
         <ul class="mt-2.5 space-y-1.5 text-sm text-muted">
-          @for (item of group.items; track item) {
-            <li>{{ item }}</li>
+          @for (operation of group.operations; track operation.id) {
+            <li>{{ operation.title }}</li>
           }
         </ul>
       </div>
     }
+    <div class="bg-surface p-5">
+      <h2 class="text-sm font-semibold text-ink">Next</h2>
+      <ul class="mt-2.5 space-y-1.5 text-sm text-faint">
+        @for (item of comingSoon; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </div>
   </section>
 
   <section class="mt-12 grid gap-6 sm:grid-cols-3">
