@@ -12,7 +12,9 @@ import { videoJoin } from './video-join';
 import { videoResize } from './video-resize';
 import { videoRotate } from './video-rotate';
 import { videoSpeed } from './video-speed';
+import { videoStack } from './video-stack';
 import { videoTrim } from './video-trim';
+import { videoWatermark } from './video-watermark';
 
 /**
  * Every operation Cinch can do. The routes, the home screen's menu and the
@@ -28,6 +30,8 @@ export const OPERATIONS: readonly Operation[] = [
   videoFps,
   videoTrim,
   videoJoin,
+  videoStack,
+  videoWatermark,
   audioExtract,
   audioMerge,
   audioReplace,
