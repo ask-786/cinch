@@ -196,6 +196,17 @@ describe('many inputs and outputs', () => {
     expect(canRun(joining, ['video', 'video'])).toBe(true);
   });
 
+  it('waits for every required kind, not just enough files', () => {
+    const replacing: Operation = {
+      ...joining,
+      accepts: ['video', 'audio'],
+      inputs: { min: 2, max: 2 },
+      requires: ['video'],
+    };
+    expect(canRun(replacing, ['audio', 'audio'])).toBe(false);
+    expect(canRun(replacing, ['audio', 'video'])).toBe(true);
+  });
+
   it('picks the matching files in order, up to the limit', () => {
     const files = [file('a'), file('b', 'audio'), file('c'), file('d'), file('e')];
     expect(pickInputs(joining, files).map((f) => f.id)).toEqual(['a', 'c', 'd']);

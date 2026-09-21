@@ -49,11 +49,5 @@ export class Home {
   /** Everything Cinch can do, for the empty state's list. */
   protected readonly catalogue = groupOperations(OPERATIONS);
 
-  protected readonly comingSoon: readonly string[] = [
-    'Resize',
-    'Crop',
-    'Change frame rate',
-    'Make a GIF',
-    'Burn in subtitles',
-  ];
+  protected readonly comingSoon: readonly string[] = ['Crop', 'Make a GIF', 'Burn in subtitles'];
 }

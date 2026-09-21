@@ -86,6 +86,14 @@ describe('operationsFor', () => {
     );
   });
 
+  it('offers a new sound for a video only once there is something to give it', () => {
+    const ids = (kinds: Parameters<typeof operationsFor>[0]) =>
+      operationsFor(kinds).map((operation) => operation.id);
+    expect(ids(['video', 'audio'])).toContain('audio-replace');
+    expect(ids(['audio', 'audio'])).not.toContain('audio-replace');
+    expect(ids(['audio', 'audio'])).toContain('audio-merge');
+  });
+
   it('offers nothing for a kind no operation accepts yet', () => {
     expect(operationsFor(['image'])).toEqual([]);
   });

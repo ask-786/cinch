@@ -55,7 +55,7 @@ const COPYABLE_AUDIO: Readonly<Record<ContainerFormat, readonly string[]>> = {
   webm: ['opus', 'vorbis'],
 };
 
-const MIME: Readonly<Record<ContainerFormat, string>> = {
+export const CONTAINER_MIME: Readonly<Record<ContainerFormat, string>> = {
   mp4: 'video/mp4',
   webm: 'video/webm',
   mkv: 'video/x-matroska',
@@ -81,6 +81,18 @@ export function canCopyVideo(format: ContainerFormat, info: MediaInfo | undefine
   // taxonomy explains it, which beats hiding the fastest path on a guess.
   if (!codec) return true;
   return COPYABLE_VIDEO[format].includes(codec);
+}
+
+/**
+ * Where a video stream can go without being re-encoded, for the operations
+ * that only touch the sound. MP4 when it will take the codec, WebM for VP8/VP9
+ * so a web clip stays a web clip, and Matroska, which holds anything, last.
+ */
+export function copyContainer(info: MediaInfo | undefined): ContainerFormat {
+  const codec = info?.videoCodec;
+  if (!codec || COPYABLE_VIDEO.mp4.includes(codec)) return 'mp4';
+  if (COPYABLE_VIDEO.webm.includes(codec)) return 'webm';
+  return 'mkv';
 }
 
 export function canCopyAudio(format: ContainerFormat, info: MediaInfo | undefined): boolean {
@@ -300,7 +312,7 @@ export const videoConvert = defineOperation<VideoConvertOptions>({
 
   build: (options, paths) => buildVideoConvertArgs(options, paths),
   outputExtension: (options) => options.format,
-  outputMime: (options) => MIME[options.format],
+  outputMime: (options) => CONTAINER_MIME[options.format],
 
   estimateBytes: (options, context) => {
     // Copying both streams means the output is the input, give or take a
