@@ -1,9 +1,11 @@
 import type { MediaKind } from '../models/media-kind';
 import { audioExtract } from './audio-extract';
-import type { Operation, OperationGroup } from './descriptor';
+import { canRun, type Operation, type OperationGroup } from './descriptor';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
 import { videoFps } from './video-fps';
+import { videoFrames } from './video-frames';
+import { videoJoin } from './video-join';
 import { videoResize } from './video-resize';
 import { videoRotate } from './video-rotate';
 import { videoSpeed } from './video-speed';
@@ -22,7 +24,9 @@ export const OPERATIONS: readonly Operation[] = [
   videoSpeed,
   videoFps,
   videoTrim,
+  videoJoin,
   audioExtract,
+  videoFrames,
 ];
 
 export function operationByRoute(route: string | null | undefined): Operation | undefined {
@@ -34,11 +38,12 @@ export function operationById(id: string): Operation | undefined {
   return OPERATIONS.find((operation) => operation.id === id);
 }
 
-/** The operations that could be run on at least one of the selected files. */
+/**
+ * The operations the selection is enough for. Pass one kind per selected file,
+ * duplicates included: joining needs two videos, not just the idea of one.
+ */
 export function operationsFor(kinds: readonly MediaKind[]): readonly Operation[] {
-  return OPERATIONS.filter((operation) =>
-    operation.accepts.some((accepted) => kinds.includes(accepted)),
-  );
+  return OPERATIONS.filter((operation) => canRun(operation, kinds));
 }
 
 export const GROUP_LABELS: Readonly<Record<OperationGroup, string>> = {

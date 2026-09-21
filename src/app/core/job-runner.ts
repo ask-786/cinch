@@ -2,19 +2,22 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { chooseCore, explainCoreChoice, type CoreVariant } from '../../media/ffmpeg/core-routing';
 import { explainFailure, type Explanation } from '../../media/ffmpeg/errors';
 import { ProgressTracker } from '../../media/ffmpeg/progress';
-import { threadArgs } from '../../media/ffmpeg/threads';
+import { threadArgs, withThreads } from '../../media/ffmpeg/threads';
 import type { MediaFile } from '../../media/models/media-file';
-import { FfmpegClient } from './ffmpeg-client';
+import { SEQUENCE_TOKEN, sequenceName, type BuildPaths } from '../../media/operations/descriptor';
+import { FfmpegClient, type MountedInput } from './ffmpeg-client';
 
-export interface JobPaths {
-  readonly inputPath: string;
-  readonly outputPath: string;
-}
+export type JobPaths = BuildPaths;
 
 export interface JobSpec {
-  readonly media: MediaFile;
-  /** File name offered when saving, e.g. `holiday-compressed.mp4`. */
+  /** One file for most operations; several, in order, for join and friends. */
+  readonly inputs: readonly MediaFile[];
+  /**
+   * File name offered when saving, e.g. `holiday-compressed.mp4`. For a
+   * numbered run it is the pattern, `holiday-frame-%04d.jpg`.
+   */
   readonly outputName: string;
+  readonly outputs: 'one' | 'many';
   readonly outputMime: string;
   /** Pure: the same paths always produce the same command. */
   readonly build: (paths: JobPaths) => string[];
@@ -36,8 +39,15 @@ export interface JobState {
   readonly failure?: Explanation;
 }
 
-export interface JobResult {
+export interface OutputFile {
+  readonly name: string;
   readonly blob: Blob;
+}
+
+export interface JobResult {
+  /** One file, or the numbered run in order. Never empty. */
+  readonly files: readonly OutputFile[];
+  /** All of them together. */
   readonly bytes: number;
   readonly elapsedMs: number;
   /** What actually ran, including the thread count the core needed. */
@@ -47,13 +57,15 @@ export interface JobResult {
 
 const IDLE: JobState = { phase: 'idle', elapsedMs: 0 };
 
+let runCounter = 0;
+
 /**
  * Runs one job at a time and keeps the UI's view of it in signals.
  *
  * Cancelling means terminating the worker: FFmpeg's WASM cannot be interrupted
  * and an AbortSignal would only reject our promise while the work carried on
  * (D14). The filesystem goes with it, which is why every job mounts its own
- * input and writes its own output.
+ * inputs and writes its own output.
  */
 @Injectable({ providedIn: 'root' })
 export class JobRunner {
@@ -149,21 +161,32 @@ export class JobRunner {
     await this.client.ensureLoaded(variant);
     if (this.cancelled) return undefined;
 
-    const input = await this.client.mountInput(spec.media.file);
-    const outputPath = `/out-${spec.media.id}-${Date.now()}.${extensionOf(spec.outputName)}`;
-
-    const command = spec.build({ inputPath: input.path, outputPath });
-    // The thread count is the core's business, so it is added here rather than
-    // by the operation — the command we show the user stays paste-able.
-    const args = withThreads(
-      command,
-      threadArgs(variant, this.client.capabilities.hardwareConcurrency),
-    );
-
-    const tracker = new ProgressTracker(spec.durationSeconds);
-    this.patch({ phase: 'running', variant, coreNote });
+    const mounts: MountedInput[] = [];
+    // A numbered run gets a folder of its own, so what FFmpeg wrote is simply
+    // everything in it.
+    const outputDir = spec.outputs === 'many' ? `/out-${++runCounter}` : undefined;
+    const outputPath = outputDir
+      ? `${outputDir}/${SEQUENCE_TOKEN}.${extensionOf(spec.outputName)}`
+      : `/out-${++runCounter}.${extensionOf(spec.outputName)}`;
 
     try {
+      // Each input on its own mount point: two files called `clip.mp4` from
+      // different folders would otherwise land on the same path.
+      for (const media of spec.inputs) mounts.push(await this.client.mountInput(media.file));
+      if (outputDir) await this.client.createDir(outputDir);
+
+      const inputPaths = mounts.map((mount) => mount.path);
+      const command = spec.build({ inputPath: inputPaths[0], inputPaths, outputPath });
+      // The thread count is the core's business, so it is added here rather than
+      // by the operation — the command we show the user stays paste-able.
+      const args = withThreads(
+        command,
+        threadArgs(variant, this.client.capabilities.hardwareConcurrency),
+      );
+
+      const tracker = new ProgressTracker(spec.durationSeconds);
+      this.patch({ phase: 'running', variant, coreNote });
+
       const code = await this.client.exec(args, {
         onProgress: (event) => {
           const reading = tracker.push(event);
@@ -174,20 +197,47 @@ export class JobRunner {
       if (this.cancelled) return undefined;
       if (code !== 0) throw new FfmpegExitError(code, this.client.logs().slice(-40));
 
-      const data = await this.client.readFile(outputPath);
-      const blob = new Blob([data as BlobPart], { type: spec.outputMime });
+      const files = outputDir
+        ? await this.collectSequence(outputDir, spec)
+        : [await this.collectOne(outputPath, spec)];
+      if (files.length === 0) throw new Error('FFmpeg finished without writing a file.');
 
       return {
-        blob,
-        bytes: blob.size,
+        files,
+        bytes: files.reduce((sum, file) => sum + file.blob.size, 0),
         elapsedMs: performance.now() - startedAt,
         args,
         variant,
       };
     } finally {
-      await this.client.deleteFile(outputPath);
-      await this.client.unmount(input);
+      if (outputDir) await this.client.deleteDir(outputDir);
+      else await this.client.deleteFile(outputPath);
+      for (const mount of mounts) await this.client.unmount(mount);
     }
+  }
+
+  private async collectOne(path: string, spec: JobSpec): Promise<OutputFile> {
+    const data = await this.client.readFile(path);
+    return { name: spec.outputName, blob: new Blob([data as BlobPart], { type: spec.outputMime }) };
+  }
+
+  /**
+   * Reads the run back in order, deleting each file as it goes: every byte is
+   * briefly in both the WASM heap and JS, and the heap is the tighter of the two.
+   */
+  private async collectSequence(dir: string, spec: JobSpec): Promise<OutputFile[]> {
+    const names = (await this.client.listFiles(dir)).sort();
+    const files: OutputFile[] = [];
+    for (const name of names) {
+      const path = `${dir}/${name}`;
+      const data = await this.client.readFile(path);
+      await this.client.deleteFile(path);
+      files.push({
+        name: sequenceName(spec.outputName, stemOf(name)),
+        blob: new Blob([data as BlobPart], { type: spec.outputMime }),
+      });
+    }
+    return files;
   }
 
   /** Terminates the worker, then warms a replacement so the next run is quick. */
@@ -234,14 +284,12 @@ export class FfmpegExitError extends Error {
   }
 }
 
-/** Thread flags are input options, so they go after the input, before the output. */
-function withThreads(command: readonly string[], threads: readonly string[]): string[] {
-  if (threads.length === 0) return [...command];
-  const afterInput = command.indexOf('-i') + 2;
-  return [...command.slice(0, afterInput), ...threads, ...command.slice(afterInput)];
-}
-
 function extensionOf(name: string): string {
   const dot = name.lastIndexOf('.');
   return dot > 0 ? name.slice(dot + 1) : 'out';
+}
+
+function stemOf(name: string): string {
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(0, dot) : name;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { hasManyOutputs, inputCountOf, SEQUENCE_TOKEN } from './descriptor';
 import { groupOperations, operationByRoute, operationsFor, OPERATIONS } from './registry';
 
 describe('the registry', () => {
@@ -26,10 +27,19 @@ describe('the registry', () => {
   it('builds a command for every operation without a file to look at', () => {
     for (const operation of OPERATIONS) {
       const options = operation.normalize?.(operation.defaults, {}) ?? operation.defaults;
-      const args = operation.build(options, { inputPath: 'in.mp4', outputPath: 'out.mp4' }, {});
+      const inputPaths = Array.from(
+        { length: inputCountOf(operation).min },
+        (_, i) => `in${i}.mp4`,
+      );
+      const outputPath = hasManyOutputs(operation) ? `out-${SEQUENCE_TOKEN}.jpg` : 'out.mp4';
+      const args = operation.build(
+        options,
+        { inputPath: inputPaths[0], inputPaths, outputPath },
+        {},
+      );
       expect(args[0]).toMatch(/^-/);
-      expect(args).toContain('in.mp4');
-      expect(args.at(-1)).toBe('out.mp4');
+      for (const path of inputPaths) expect(args).toContain(path);
+      expect(args.at(-1)).toBe(outputPath);
     }
   });
 
@@ -64,6 +74,16 @@ describe('operationsFor', () => {
 
   it('offers only what an audio file can do', () => {
     expect(operationsFor(['audio']).map((operation) => operation.id)).toEqual(['audio-extract']);
+  });
+
+  it('offers joining only once there are two videos to join', () => {
+    expect(operationsFor(['video']).map((operation) => operation.id)).not.toContain('video-join');
+    expect(operationsFor(['video', 'video']).map((operation) => operation.id)).toContain(
+      'video-join',
+    );
+    expect(operationsFor(['video', 'audio']).map((operation) => operation.id)).not.toContain(
+      'video-join',
+    );
   });
 
   it('offers nothing for a kind no operation accepts yet', () => {

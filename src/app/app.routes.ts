@@ -1,18 +1,25 @@
 import { inject } from '@angular/core';
 import { Router, type CanActivateFn, type Routes } from '@angular/router';
+import { canRun } from '../media/operations/descriptor';
 import { operationByRoute } from '../media/operations/registry';
 import { Selection } from './core/selection';
 
 /**
  * An operation URL needs two things to be meaningful: an operation that exists,
- * and a file it can be pointed at. A refresh loses the second — the file lives
+ * and enough files it can be pointed at. A refresh loses the second — the file lives
  * in memory, not on a server — so it goes back to the start (D8).
  */
 const operationIsUsable: CanActivateFn = (route) => {
   const operation = operationByRoute(route.paramMap.get('operation'));
   const selection = inject(Selection);
 
-  if (operation && selection.files().some((file) => operation.accepts.includes(file.kind))) {
+  if (
+    operation &&
+    canRun(
+      operation,
+      selection.files().map((file) => file.kind),
+    )
+  ) {
     return true;
   }
   return inject(Router).createUrlTree(['/']);

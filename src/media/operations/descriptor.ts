@@ -15,14 +15,44 @@ import type { MediaKind } from '../models/media-kind';
 export type OptionValue = string | number | boolean | undefined;
 export type OptionValues = Readonly<Record<string, OptionValue>>;
 
-export interface OperationContext {
-  readonly media?: MediaFile;
+/** One file an operation is pointed at, with whatever we know about it so far. */
+export interface OperationInput {
+  readonly media: MediaFile;
   readonly info?: MediaInfo;
 }
 
+export interface OperationContext {
+  /** The first input — the only one, for every single-input operation. */
+  readonly media?: MediaFile;
+  readonly info?: MediaInfo;
+  /**
+   * Every input, in the order the user arranged them. Only multi-input
+   * operations need to read this; for the rest it holds `media` alone.
+   */
+  readonly inputs?: readonly OperationInput[];
+}
+
 export interface BuildPaths {
+  /** Same as `inputPaths[0]`. */
   readonly inputPath: string;
+  readonly inputPaths: readonly string[];
+  /**
+   * Where FFmpeg writes. For an operation with `outputs: 'many'` this holds
+   * `SEQUENCE_TOKEN`, which FFmpeg replaces with 0001, 0002, …
+   */
   readonly outputPath: string;
+}
+
+/**
+ * The numbering FFmpeg's image2 and segment muxers expand. Always this token,
+ * so the job runner can map each file it finds back to a name the user gets.
+ */
+export const SEQUENCE_TOKEN = '%04d';
+
+/** How many files an operation takes. Absent means exactly one. */
+export interface InputCount {
+  readonly min: number;
+  readonly max?: number;
 }
 
 export interface Choice {
@@ -124,6 +154,14 @@ export interface OperationDescriptor<O extends OptionValues> {
   readonly group: OperationGroup;
   /** Which kinds of file this can be pointed at. */
   readonly accepts: readonly MediaKind[];
+  /** Join, merge, stack: operations that read several files at once (D24). */
+  readonly inputs?: InputCount;
+  /**
+   * `'many'` for operations that write a numbered run of files — frames,
+   * thumbnails, segments. Their output path carries `SEQUENCE_TOKEN`, and the
+   * result is saved as a folder or a zip.
+   */
+  readonly outputs?: 'one' | 'many';
   readonly defaults: O;
   readonly fields: readonly Field<O>[];
   /**
@@ -162,6 +200,39 @@ export function defineOperation<O extends OptionValues>(
 }
 
 /* ---------- reading a descriptor ---------- */
+
+export function inputCountOf(operation: Operation): InputCount {
+  return operation.inputs ?? { min: 1, max: 1 };
+}
+
+export function isMultiInput(operation: Operation): boolean {
+  const { min, max } = inputCountOf(operation);
+  return min > 1 || max === undefined || max > 1;
+}
+
+export function hasManyOutputs(operation: Operation): boolean {
+  return operation.outputs === 'many';
+}
+
+/**
+ * The files an operation would run on, from everything the user selected:
+ * the one they chose for a single-input operation, all of them (up to the
+ * limit) for a multi-input one.
+ */
+export function pickInputs<T extends { readonly kind: MediaKind }>(
+  operation: Operation,
+  files: readonly T[],
+): readonly T[] {
+  const accepted = files.filter((file) => operation.accepts.includes(file.kind));
+  const { max } = inputCountOf(operation);
+  return max === undefined ? accepted : accepted.slice(0, max);
+}
+
+/** Whether a selection holds enough of the right files to open the operation. */
+export function canRun(operation: Operation, kinds: readonly MediaKind[]): boolean {
+  const matching = kinds.filter((kind) => operation.accepts.includes(kind)).length;
+  return matching >= inputCountOf(operation).min;
+}
 
 export function choicesOf(
   field: Field<OptionValues>,
@@ -223,16 +294,36 @@ export function decodeChoice(choices: readonly Choice[], encoded: string): Optio
   return choice ? choice.value : undefined;
 }
 
-/** The name we suggest when saving: `holiday.mov` → `holiday-compressed.mp4`. */
+/**
+ * The name we suggest when saving: `holiday.mov` → `holiday-compressed.mp4`.
+ * For a numbered run it is a pattern, `holiday-frames-%04d.jpg`, which
+ * `sequenceName` fills in per file.
+ */
 export function outputNameFor(
   operation: Operation,
   options: OptionValues,
   context: OperationContext,
 ): string {
+  const numbering = hasManyOutputs(operation) ? `-${SEQUENCE_TOKEN}` : '';
+  return `${outputStem(operation, context)}${numbering}.${operation.outputExtension(options, context)}`;
+}
+
+/** The name for a numbered run saved as one archive: `holiday-frames.zip`. */
+export function archiveNameFor(operation: Operation, context: OperationContext): string {
+  return `${outputStem(operation, context)}.zip`;
+}
+
+/** `holiday-frames-%04d.jpg` + `0007` → `holiday-frames-0007.jpg`. */
+export function sequenceName(pattern: string, number: string): string {
+  return pattern.replace(SEQUENCE_TOKEN, number);
+}
+
+function outputStem(operation: Operation, context: OperationContext): string {
   const source = context.media?.name ?? 'output';
   const dot = source.lastIndexOf('.');
-  const stem = dot > 0 ? source.slice(0, dot) : source;
-  return `${stem}-${operation.outputSuffix}.${operation.outputExtension(options, context)}`;
+  // A `%` in the user's own file name would read as a second pattern.
+  const stem = (dot > 0 ? source.slice(0, dot) : source).replaceAll('%', '');
+  return `${stem}-${operation.outputSuffix}`;
 }
 
 /**
@@ -244,8 +335,12 @@ export function previewCommand(
   options: OptionValues,
   context: OperationContext,
 ): string {
+  const inputPaths = context.inputs?.map((input) => input.media.name) ?? [
+    context.media?.name ?? 'input',
+  ];
   const paths = {
-    inputPath: context.media?.name ?? 'input',
+    inputPath: inputPaths[0] ?? 'input',
+    inputPaths,
     outputPath: outputNameFor(operation, options, context),
   };
   return toShellCommand(operation.build(options, paths, context));

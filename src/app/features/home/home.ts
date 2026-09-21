@@ -38,9 +38,10 @@ export class Home {
   /** Dropping several files is how the combine operations are discovered (D24). */
   protected readonly isMultiple = computed(() => this.selection.count() > 1);
 
-  private readonly kinds = computed<readonly MediaKind[]>(() => [
-    ...new Set(this.selection.files().map((file) => file.kind)),
-  ]);
+  /** One per file, repeats kept: joining needs two videos, not one. */
+  private readonly kinds = computed<readonly MediaKind[]>(() =>
+    this.selection.files().map((file) => file.kind),
+  );
 
   /** What can be done with what is on screen, straight from the registry. */
   protected readonly available = computed(() => groupOperations(operationsFor(this.kinds())));
@@ -53,7 +54,6 @@ export class Home {
     'Crop',
     'Change frame rate',
     'Make a GIF',
-    'Extract frames',
     'Burn in subtitles',
   ];
 }

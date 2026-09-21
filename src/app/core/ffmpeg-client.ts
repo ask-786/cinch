@@ -188,6 +188,26 @@ export class FfmpegClient {
     await this.require().writeFile(path, data);
   }
 
+  async createDir(path: string): Promise<void> {
+    await this.require().createDir(path);
+  }
+
+  /** The names of the plain files in a folder, without `.` and `..`. */
+  async listFiles(path: string): Promise<string[]> {
+    const nodes = await this.require().listDir(path);
+    return nodes.filter((node) => !node.isDir).map((node) => node.name);
+  }
+
+  /** Empties a folder and removes it. Quiet when there is nothing left to do. */
+  async deleteDir(path: string): Promise<void> {
+    try {
+      for (const name of await this.listFiles(path)) await this.deleteFile(`${path}/${name}`);
+      await this.require().deleteDir(path);
+    } catch {
+      // Already gone, or the instance is down.
+    }
+  }
+
   async deleteFile(path: string): Promise<void> {
     try {
       await this.require().deleteFile(path);
