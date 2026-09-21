@@ -6,8 +6,10 @@ import {
   buildVideoChromakeyArgs,
   chromakeyRoles,
   DEFAULT_CHROMAKEY,
+  alphaVideoKbps,
   keyFilter,
   videoChromakey,
+  vp8Crf,
 } from './video-chromakey';
 
 const input = (kind: MediaKind, name: string, extra = {}): OperationInput => ({
@@ -38,6 +40,26 @@ describe('keyFilter', () => {
   });
 });
 
+describe('vp8Crf', () => {
+  it('runs from worst at 0 to best at 100', () => {
+    expect(vp8Crf(0)).toBe(40);
+    expect(vp8Crf(100)).toBe(10);
+  });
+});
+
+describe('alphaVideoKbps', () => {
+  it('grows with the frame size and rate', () => {
+    expect(
+      alphaVideoKbps({ source: 'ffprobe', kind: 'video', width: 1280, height: 720, frameRate: 30 }),
+    ).toBe(1935);
+    expect(alphaVideoKbps(VIDEO.info)).toBeGreaterThan(1935);
+  });
+
+  it('assumes 720p30 while the size is still being read', () => {
+    expect(alphaVideoKbps(undefined)).toBe(1935);
+  });
+});
+
 describe('buildVideoChromakeyArgs', () => {
   it('writes a transparent WebM when there is no background', () => {
     const args = buildVideoChromakeyArgs(
@@ -46,9 +68,20 @@ describe('buildVideoChromakeyArgs', () => {
       [VIDEO],
     );
     expect(args.slice(0, 4)).toEqual(['-i', 'clip.mp4', '-vf', 'chromakey=0x00B140:0.20:0.05']);
-    expect(args).toContain('libvpx-vp9');
+    expect(args[args.indexOf('-c:v') + 1]).toBe('libvpx');
     expect(args[args.indexOf('-pix_fmt') + 1]).toBe('yuva420p');
+    expect(args[args.indexOf('-auto-alt-ref') + 1]).toBe('0');
     expect(args.at(-1)).toBe('out.webm');
+  });
+
+  it('caps the transparent video’s bitrate by its frame size', () => {
+    const args = buildVideoChromakeyArgs(
+      DEFAULT_CHROMAKEY,
+      { inputPaths: ['clip.mp4'], outputPath: 'out.webm' },
+      [VIDEO],
+    );
+    expect(args[args.indexOf('-crf') + 1]).toBe(String(vp8Crf(DEFAULT_CHROMAKEY.quality)));
+    expect(args[args.indexOf('-b:v') + 1]).toBe(`${alphaVideoKbps(VIDEO.info)}k`);
   });
 
   it('loops the picture at the video’s own frame rate, behind the keyed video', () => {
@@ -83,6 +116,21 @@ describe('the chromakey descriptor', () => {
     expect(videoChromakey.outputExtension(DEFAULT_CHROMAKEY, { inputs: [VIDEO] })).toBe('webm');
     expect(videoChromakey.outputExtension(DEFAULT_CHROMAKEY, { inputs: [VIDEO, PICTURE] })).toBe(
       'mp4',
+    );
+  });
+
+  it('estimates the transparent WebM from its bitrate cap, alpha stream included', () => {
+    const clip = input('video', 'clip.mp4', {
+      ...VIDEO.info,
+      durationSeconds: 10,
+      bitrate: 8_000_000,
+    });
+    const kbps = 2 * alphaVideoKbps(clip.info) + 128;
+    expect(videoChromakey.estimateBytes?.(DEFAULT_CHROMAKEY, { inputs: [clip] })).toBe(
+      Math.round((kbps * 1000 * 10) / 8),
+    );
+    expect(videoChromakey.estimateBytes?.(DEFAULT_CHROMAKEY, { inputs: [clip, PICTURE] })).toBe(
+      10_000_000,
     );
   });
 

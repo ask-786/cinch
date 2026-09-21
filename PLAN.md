@@ -285,7 +285,11 @@ Resolved during design review. `D` numbers are referenced from the build stages.
   (about 11 s of 720p30); a 480 MB buffer reverses fine on the MT core's fixed heap.
 - Measured: a picture looped with `-loop 1` runs at 25 fps and sets `overlay`'s pace, so a
   30 fps video comes out at 25. Green screen passes the video's rate as `-framerate`.
-- Measured on the core's 5.1: VP9 with `yuva420p` keeps its alpha without `-auto-alt-ref 0`.
+- Measured on the core's 5.1: libvpx-vp9 crashes on the first packet of real footage
+  ("memory access out of bounds" on MT, a crash or hang on ST), with or without alpha, and
+  `-row-mt`, `-deadline`, `-cpu-used`, `-auto-alt-ref` and `-lag-in-frames` don't help. Flat
+  test colours encode fine, which hid it. Transparent green screen uses VP8 (`-auto-alt-ref 0`
+  is required with alpha). Compress and Convert still offer VP9.
 - Measured: most of a blurred-bars pad's time is encoding the bigger frame, not the blur;
   blurring at a quarter size still cut the filter's own cost 3–4×.
 
