@@ -5,12 +5,18 @@ import { audioRemove } from './audio-remove';
 import { audioReplace } from './audio-replace';
 import { imagesVideo } from './images-video';
 import { canRun, type Operation, type OperationGroup } from './descriptor';
+import { videoAdjust } from './video-adjust';
+import { videoBitrate } from './video-bitrate';
+import { videoChromakey } from './video-chromakey';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
+import { videoDeinterlace } from './video-deinterlace';
 import { videoFps } from './video-fps';
 import { videoFrames } from './video-frames';
 import { videoJoin } from './video-join';
+import { videoPad } from './video-pad';
 import { videoResize } from './video-resize';
+import { videoReverse } from './video-reverse';
 import { videoRotate } from './video-rotate';
 import { videoScenes } from './video-scenes';
 import { videoSegments } from './video-segments';
@@ -32,11 +38,17 @@ export const OPERATIONS: readonly Operation[] = [
   videoRotate,
   videoSpeed,
   videoFps,
+  videoBitrate,
+  videoReverse,
+  videoPad,
+  videoAdjust,
+  videoDeinterlace,
   videoTrim,
   videoSegments,
   videoJoin,
   videoStack,
   videoWatermark,
+  videoChromakey,
   audioExtract,
   audioMerge,
   audioReplace,

@@ -1,3 +1,4 @@
+import type { MediaInfo } from '../models/media-info';
 import { qualityToCrf } from './video-compress';
 
 /**
@@ -45,4 +46,13 @@ export function h264OutputArgs(output: H264Output): string[] {
   // Puts the index at the front so the file can start playing while it copies.
   args.push('-movflags', '+faststart');
   return args;
+}
+
+/**
+ * For the operations that keep the frame and the length — rotate, colour,
+ * deinterlace: the source's own bitrate is the best guess available.
+ */
+export function sameSizeEstimate(info: MediaInfo | undefined): number | undefined {
+  if (info?.durationSeconds === undefined || info.bitrate === undefined) return undefined;
+  return Math.round((info.bitrate / 8) * info.durationSeconds);
 }

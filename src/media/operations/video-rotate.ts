@@ -1,5 +1,5 @@
 import { defineOperation } from './descriptor';
-import { h264OutputArgs } from './h264-output';
+import { h264OutputArgs, sameSizeEstimate } from './h264-output';
 import { qualityToCrf } from './video-compress';
 
 /**
@@ -129,12 +129,6 @@ export const videoRotate = defineOperation<VideoRotateOptions>({
   outputExtension: () => 'mp4',
   outputMime: () => 'video/mp4',
 
-  estimateBytes: (options, context) => {
-    // The picture is the same size whichever way up it is, so the source's own
-    // bitrate is the best guess available.
-    const duration = context.info?.durationSeconds;
-    const bitrate = context.info?.bitrate;
-    if (duration === undefined || bitrate === undefined) return undefined;
-    return Math.round((bitrate / 8) * duration);
-  },
+  // The picture is the same size whichever way up it is.
+  estimateBytes: (_options, context) => sameSizeEstimate(context.info),
 });

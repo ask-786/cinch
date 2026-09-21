@@ -136,10 +136,7 @@ function videoArgs(options: VideoCompressionOptions, info?: MediaInfo): string[]
   if (options.mode === 'size') {
     const bitrate = videoBitrateBps(options, info);
     if (bitrate !== undefined) {
-      const kbps = Math.max(1, Math.round(bitrate / 1000));
-      args.push('-b:v', `${kbps}k`);
-      // A ceiling and a buffer, so a busy scene cannot blow past the target.
-      args.push('-maxrate', `${Math.round(kbps * 1.45)}k`, '-bufsize', `${kbps * 2}k`);
+      args.push(...cappedBitrateArgs(Math.max(1, Math.round(bitrate / 1000))));
       return args;
     }
     // No duration to divide by — fall through to a quality-based encode.
@@ -150,6 +147,18 @@ function videoArgs(options: VideoCompressionOptions, info?: MediaInfo): string[]
   if (options.codec === 'vp9') args.push('-b:v', '0');
 
   return args;
+}
+
+/** An average bitrate with a ceiling and a buffer, so a busy scene cannot blow past it. */
+export function cappedBitrateArgs(kbps: number): string[] {
+  return [
+    '-b:v',
+    `${kbps}k`,
+    '-maxrate',
+    `${Math.round(kbps * 1.45)}k`,
+    '-bufsize',
+    `${kbps * 2}k`,
+  ];
 }
 
 function audioArgs(options: VideoCompressionOptions): string[] {

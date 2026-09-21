@@ -1,7 +1,7 @@
 import type { MediaInfo } from '../models/media-info';
 import type { MediaKind } from '../models/media-kind';
 import { defineOperation, type OperationContext, type OperationInput } from './descriptor';
-import { h264OutputArgs } from './h264-output';
+import { h264OutputArgs, sameSizeEstimate } from './h264-output';
 import { qualityToCrf } from './video-compress';
 
 /**
@@ -176,10 +176,6 @@ export const videoWatermark = defineOperation<VideoWatermarkOptions>({
   outputMime: () => 'video/mp4',
   outputDuration: (_options, context) => videoInput(context)?.info?.durationSeconds,
 
-  estimateBytes: (_options, context) => {
-    // Same frame, same length: the source's own bitrate is the best guess.
-    const info = videoInput(context)?.info;
-    if (info?.durationSeconds === undefined || info.bitrate === undefined) return undefined;
-    return Math.round((info.bitrate / 8) * info.durationSeconds);
-  },
+  // Same frame, same length.
+  estimateBytes: (_options, context) => sameSizeEstimate(videoInput(context)?.info),
 });

@@ -278,9 +278,16 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 **Video**
 
 - [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [ ] Crop · [x] Trim
-- [x] Change FPS · [ ] Change quality · [ ] Change bitrate
-- [x] Rotate and flip · [x] Speed up / slow down · [ ] Reverse · [ ] Deinterlace
-- [ ] Pad to an aspect ratio · [ ] Colour adjust, sharpen, blur · [ ] Remove a green screen
+- [x] Change FPS · [x] Change quality (Compress's quality mode) · [x] Change bitrate
+- [x] Rotate and flip · [x] Speed up / slow down · [x] Reverse · [x] Deinterlace
+- [x] Pad to an aspect ratio · [x] Colour adjust, sharpen, blur · [x] Remove a green screen
+- Measured on the core's 5.1: reverse buffers raw frames, so the cap is 500 MB of them
+  (about 11 s of 720p30); a 480 MB buffer reverses fine on the MT core's fixed heap.
+- Measured: a picture looped with `-loop 1` runs at 25 fps and sets `overlay`'s pace, so a
+  30 fps video comes out at 25. Green screen passes the video's rate as `-framerate`.
+- Measured on the core's 5.1: VP9 with `yuva420p` keeps its alpha without `-auto-alt-ref 0`.
+- Measured: most of a blurred-bars pad's time is encoding the bigger frame, not the blur;
+  blurring at a quarter size still cut the filter's own cost 3–4×.
 
 **Extract**
 
