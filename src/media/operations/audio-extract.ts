@@ -18,7 +18,7 @@ export const DEFAULT_AUDIO_EXTRACT: AudioExtractOptions = {
   bitrate: 'good',
 };
 
-const ENCODERS: Readonly<Record<AudioFormat, string>> = {
+export const AUDIO_ENCODERS: Readonly<Record<AudioFormat, string>> = {
   mp3: 'libmp3lame',
   m4a: 'aac',
   opus: 'libopus',
@@ -27,7 +27,7 @@ const ENCODERS: Readonly<Record<AudioFormat, string>> = {
   ogg: 'libvorbis',
 };
 
-const MIME: Readonly<Record<AudioFormat, string>> = {
+export const AUDIO_MIME: Readonly<Record<AudioFormat, string>> = {
   mp3: 'audio/mpeg',
   m4a: 'audio/mp4',
   opus: 'audio/ogg',
@@ -39,7 +39,7 @@ const MIME: Readonly<Record<AudioFormat, string>> = {
 /** WAV and FLAC carry every sample, so a bitrate would mean nothing. */
 const LOSSLESS: readonly AudioFormat[] = ['wav', 'flac'];
 
-const BITRATE_KBPS: Readonly<Record<Exclude<AudioBitrate, 'copy'>, number>> = {
+export const AUDIO_BITRATE_KBPS: Readonly<Record<Exclude<AudioBitrate, 'copy'>, number>> = {
   small: 96,
   good: 192,
   high: 320,
@@ -73,9 +73,9 @@ export function buildAudioExtractArgs(
   if (options.bitrate === 'copy') {
     args.push('-c:a', 'copy');
   } else {
-    args.push('-c:a', ENCODERS[options.format]);
+    args.push('-c:a', AUDIO_ENCODERS[options.format]);
     if (!isLossless(options.format)) {
-      args.push('-b:a', `${BITRATE_KBPS[options.bitrate]}k`);
+      args.push('-b:a', `${AUDIO_BITRATE_KBPS[options.bitrate]}k`);
     }
   }
 
@@ -88,7 +88,7 @@ export function audioBytesPerSecond(options: AudioExtractOptions): number | unde
   if (options.bitrate === 'copy') return undefined;
   if (options.format === 'wav') return 44_100 * 2 * 2; // 16-bit stereo at CD rate
   if (options.format === 'flac') return Math.round(44_100 * 2 * 2 * 0.6);
-  return (BITRATE_KBPS[options.bitrate] * 1000) / 8;
+  return (AUDIO_BITRATE_KBPS[options.bitrate] * 1000) / 8;
 }
 
 export const audioExtract = defineOperation<AudioExtractOptions>({
@@ -170,7 +170,7 @@ export const audioExtract = defineOperation<AudioExtractOptions>({
 
   build: (options, paths) => buildAudioExtractArgs(options, paths),
   outputExtension: (options) => options.format,
-  outputMime: (options) => MIME[options.format],
+  outputMime: (options) => AUDIO_MIME[options.format],
 
   estimateBytes: (options, context) => {
     const duration = context.info?.durationSeconds;

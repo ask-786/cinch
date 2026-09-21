@@ -265,6 +265,9 @@ Resolved during design review. `D` numbers are referenced from the build stages.
       `SEQUENCE_TOKEN` (`%04d`) inside a job-owned folder, the runner reads the folder back in
       order, and saving writes into a picked folder (`showDirectoryPicker`) or one stored zip
       (`media/file-system/zip.ts`). First user: extract frames.
+- [x] **Mixed inputs.** `requires` names kinds the selection must contain, on top of the count:
+      replacing a video's sound takes two files, one of them a video. Measured on the core's 5.1:
+      `apad` with `-shortest` ends cleanly, and `amix` takes `normalize=0`.
 - Measured on the MT core: a `-filter_complex` graph hangs it unless pinned with
   `-filter_complex_threads 1` — `withThreads` adds that alongside `-threads`.
 - Measured on the core's FFmpeg 5.1: `fps=1/N` drops the last frame of a run; extract frames
@@ -285,9 +288,9 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 **Audio**
 
 - [x] Convert format (the extract descriptor serves audio inputs too) · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
-- [ ] Change volume · [ ] Fade in/out · [ ] Merge audio
+- [ ] Change volume · [ ] Fade in/out · [x] Merge audio
 - [ ] Normalise loudness (`loudnorm`) · [ ] Trim silence · [ ] Waveform / spectrogram image
-- [ ] Remove the sound from a video · [ ] Replace a video's audio track
+- [x] Remove the sound from a video · [x] Replace a video's audio track
 
 **Images**
 

@@ -157,6 +157,12 @@ export interface OperationDescriptor<O extends OptionValues> {
   /** Join, merge, stack: operations that read several files at once (D24). */
   readonly inputs?: InputCount;
   /**
+   * Kinds the selection must include at least one of each, on top of the
+   * count: replacing a video's sound takes a video and an audio file, and two
+   * audio files are not enough.
+   */
+  readonly requires?: readonly MediaKind[];
+  /**
    * `'many'` for operations that write a numbered run of files — frames,
    * thumbnails, segments. Their output path carries `SEQUENCE_TOKEN`, and the
    * result is saved as a folder or a zip.
@@ -231,7 +237,8 @@ export function pickInputs<T extends { readonly kind: MediaKind }>(
 /** Whether a selection holds enough of the right files to open the operation. */
 export function canRun(operation: Operation, kinds: readonly MediaKind[]): boolean {
   const matching = kinds.filter((kind) => operation.accepts.includes(kind)).length;
-  return matching >= inputCountOf(operation).min;
+  const required = operation.requires ?? [];
+  return matching >= inputCountOf(operation).min && required.every((kind) => kinds.includes(kind));
 }
 
 export function choicesOf(

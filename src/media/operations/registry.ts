@@ -1,5 +1,8 @@
 import type { MediaKind } from '../models/media-kind';
 import { audioExtract } from './audio-extract';
+import { audioMerge } from './audio-merge';
+import { audioRemove } from './audio-remove';
+import { audioReplace } from './audio-replace';
 import { canRun, type Operation, type OperationGroup } from './descriptor';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
@@ -26,6 +29,9 @@ export const OPERATIONS: readonly Operation[] = [
   videoTrim,
   videoJoin,
   audioExtract,
+  audioMerge,
+  audioReplace,
+  audioRemove,
   videoFrames,
 ];
 
