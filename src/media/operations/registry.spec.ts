@@ -94,8 +94,16 @@ describe('operationsFor', () => {
     expect(ids(['audio', 'audio'])).toContain('audio-merge');
   });
 
+  it('offers a slideshow for pictures, but a logo only once there is a video too', () => {
+    const ids = operationsFor(['image']).map((operation) => operation.id);
+    expect(ids).toEqual(['images-video']);
+    expect(operationsFor(['image', 'video']).map((operation) => operation.id)).toContain(
+      'video-watermark',
+    );
+  });
+
   it('offers nothing for a kind no operation accepts yet', () => {
-    expect(operationsFor(['image'])).toEqual([]);
+    expect(operationsFor(['subtitle'])).toEqual([]);
   });
 });
 
