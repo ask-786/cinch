@@ -256,14 +256,19 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 ### Stage 6 — Operations
 
-**Two things gate most of the list below.** Neither is an operation, and both are worth doing
-before the descriptors pile up:
+**Multi-input and multi-output are in** (2026-09-21), each proved by one operation:
 
-1. **One input per job.** `JobSpec` mounts exactly one file (`app/core/job-runner.ts`), which
-   blocks join, merge audio, watermark, replace audio, the stacks and images→video. D7 already
-   says multi-input yes, batch no.
-2. **One output per job.** `outputPath`, `outputExtension` and the save step all assume a single
-   file, so extract frames, thumbnails and split-into-segments have nowhere to put their results.
+- [x] **Many inputs.** A descriptor declares `inputs: { min, max }`; the job mounts each file on
+      its own mount point, `paths.inputPaths` and `context.inputs` carry them in the user's
+      order, and the operation screen lists them with up/down reordering. First user: join.
+- [x] **Many outputs.** A descriptor declares `outputs: 'many'`; its output path carries
+      `SEQUENCE_TOKEN` (`%04d`) inside a job-owned folder, the runner reads the folder back in
+      order, and saving writes into a picked folder (`showDirectoryPicker`) or one stored zip
+      (`media/file-system/zip.ts`). First user: extract frames.
+- Measured on the MT core: a `-filter_complex` graph hangs it unless pinned with
+  `-filter_complex_threads 1` — `withThreads` adds that alongside `-threads`.
+- Measured on the core's FFmpeg 5.1: `fps=1/N` drops the last frame of a run; extract frames
+  uses `select` on timestamps instead.
 
 **Video**
 
@@ -274,7 +279,7 @@ before the descriptors pile up:
 
 **Extract**
 
-- [x] Extract audio · [ ] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
+- [x] Extract audio · [x] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
 - [ ] Scene-based thumbnails (`thumbnail`, `select`) · [ ] Animated WebP and APNG
 
 **Audio**
@@ -287,7 +292,7 @@ before the descriptors pile up:
 **Images**
 
 - [ ] Images → video · [ ] Video → images · [ ] GIF conversion
-- [ ] Join videos (`concat`) · [ ] Side by side and grids (`hstack`/`vstack`/`xstack`)
+- [x] Join videos (`concat`) · [ ] Side by side and grids (`hstack`/`vstack`/`xstack`)
 - [ ] Watermark or text over a frame · [ ] Split into segments · [ ] Strip or fix metadata
 
 **Subtitles**

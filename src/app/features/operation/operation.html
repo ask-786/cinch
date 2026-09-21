@@ -25,16 +25,60 @@
       <div class="min-w-0">
         <h1 class="truncate text-lg font-semibold tracking-tight">{{ op.title }}</h1>
         <p class="truncate text-sm text-muted">
-          {{ file.name }}
-          <span class="px-1 text-faint">·</span>{{ formatBytes(file.size) }}
-          @if (info()?.durationSeconds; as duration) {
-            <span class="px-1 text-faint">·</span>{{ formatDuration(duration) }}
+          @if (multiInput()) {
+            {{ inputs().length }} files <span class="px-1 text-faint">·</span
+            >{{ formatBytes(inputBytes()) }}
+            @if (inputDuration(); as duration) {
+              <span class="px-1 text-faint">·</span>{{ formatDuration(duration) }} in all
+            }
+          } @else {
+            {{ file.name }}
+            <span class="px-1 text-faint">·</span>{{ formatBytes(file.size) }}
+            @if (info()?.durationSeconds; as duration) {
+              <span class="px-1 text-faint">·</span>{{ formatDuration(duration) }}
+            }
           }
         </p>
       </div>
     </div>
 
-    @if (candidates().length > 1) {
+    @if (multiInput()) {
+      <ol class="mt-4 divide-y divide-line rounded-card border border-line bg-surface">
+        @for (item of inputs(); track item.id; let i = $index, first = $first, last = $last) {
+          <li class="flex items-center gap-3 px-4 py-2.5">
+            <span class="w-5 shrink-0 font-mono text-xs text-faint">{{ i + 1 }}</span>
+            <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ item.name }}</span>
+            <span class="font-mono text-xs text-muted">
+              {{ formatDuration(selection.info().get(item.id)?.durationSeconds) }}
+            </span>
+            <div class="flex gap-1">
+              <button
+                appButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                [disabled]="first || !!current"
+                (click)="move(item.id, -1)"
+                [attr.aria-label]="'Move ' + item.name + ' earlier'"
+              >
+                ↑
+              </button>
+              <button
+                appButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                [disabled]="last || !!current"
+                (click)="move(item.id, 1)"
+                [attr.aria-label]="'Move ' + item.name + ' later'"
+              >
+                ↓
+              </button>
+            </div>
+          </li>
+        }
+      </ol>
+    } @else if (candidates().length > 1) {
       <div class="mt-4 flex flex-wrap gap-2">
         @for (candidate of candidates(); track candidate.id) {
           <button
@@ -129,21 +173,29 @@
         <div class="mt-4 grid grid-cols-3 items-end gap-4">
           <div>
             <p class="text-xs text-muted">Before</p>
-            <p class="mt-1 font-mono text-sm text-ink">{{ formatBytes(file.size) }}</p>
+            <p class="mt-1 font-mono text-sm text-ink">{{ formatBytes(inputBytes()) }}</p>
           </div>
           <div>
             <p class="text-xs text-muted">After</p>
             <p class="mt-1 font-mono text-sm text-ink">{{ formatBytes(result.bytes) }}</p>
           </div>
-          <div>
-            <p class="text-xs text-muted">Difference</p>
-            <p
-              class="mt-1 font-mono text-sm"
-              [class]="(resultSavedPercent() ?? 0) > 0 ? 'text-good' : 'text-warn'"
-            >
-              {{ (resultSavedPercent() ?? 0) > 0 ? '−' : '+' }}{{ abs(resultSavedPercent() ?? 0) }}%
-            </p>
-          </div>
+          @if (manyOutputs()) {
+            <div>
+              <p class="text-xs text-muted">Files</p>
+              <p class="mt-1 font-mono text-sm text-ink">{{ result.files.length }}</p>
+            </div>
+          } @else {
+            <div>
+              <p class="text-xs text-muted">Difference</p>
+              <p
+                class="mt-1 font-mono text-sm"
+                [class]="(resultSavedPercent() ?? 0) > 0 ? 'text-good' : 'text-warn'"
+              >
+                {{ (resultSavedPercent() ?? 0) > 0 ? '−' : '+'
+                }}{{ abs(resultSavedPercent() ?? 0) }}%
+              </p>
+            </div>
+          }
         </div>
 
         <p class="mt-4 text-sm text-muted">
@@ -153,7 +205,13 @@
 
         <div class="mt-5 flex flex-wrap gap-2">
           <button appButton variant="primary" size="md" type="button" (click)="save()">
-            {{ saveState() === 'saved' ? 'Saved' : 'Save the file' }}
+            @if (saveState() === 'saved') {
+              Saved
+            } @else if (result.files.length > 1) {
+              Save all {{ result.files.length }} files
+            } @else {
+              Save the file
+            }
           </button>
           <button appButton variant="secondary" size="md" type="button" (click)="again()">
             Change the settings
@@ -242,7 +300,7 @@
           </div>
           <p class="mt-3 text-xs text-faint">
             Saved as <span class="font-mono">{{ outputName() }}</span
-            >.
+            >{{ manyOutputs() ? ' and on, into a folder you pick or one zip file.' : '.' }}
           </p>
         </div>
 

@@ -22,3 +22,20 @@ export function threadArgs(variant: CoreVariant, hardwareConcurrency: number): r
   const threads = Math.max(1, Math.min(MAX_MT_THREADS, Math.floor(hardwareConcurrency) || 1));
   return ['-threads', String(threads)];
 }
+
+/**
+ * Adds the thread flags to a command as output options: after the last input,
+ * before anything about the output. After the *first* input would make them
+ * an input option of the second, and the encoder would pick its own count.
+ *
+ * A `-filter_complex` graph also gets `-filter_complex_threads 1`. Measured
+ * 2026-09-21 on a two-clip join: left at its default, the graph's own threads
+ * on top of x264's four hang the MT core just like an unpinned x264 does;
+ * pinned to one, the same join takes 5 s. Simple `-vf` chains are unaffected.
+ */
+export function withThreads(command: readonly string[], threads: readonly string[]): string[] {
+  if (threads.length === 0) return [...command];
+  const graph = command.includes('-filter_complex') ? ['-filter_complex_threads', '1'] : [];
+  const afterInputs = command.lastIndexOf('-i') + 2;
+  return [...graph, ...command.slice(0, afterInputs), ...threads, ...command.slice(afterInputs)];
+}

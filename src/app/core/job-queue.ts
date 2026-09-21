@@ -9,6 +9,8 @@ export interface QueuedJob {
   /** "Compress · holiday.mp4" — what the list shows. */
   readonly label: string;
   readonly outputName: string;
+  /** Where a numbered run is bundled when it cannot go into a folder. */
+  readonly archiveName?: string;
   readonly inputBytes: number;
   readonly spec: JobSpec;
   readonly status: QueuedStatus;
@@ -43,7 +45,7 @@ export class JobQueue {
   );
   readonly isBusy = computed(() => this.activeId() !== undefined);
 
-  enqueue(spec: JobSpec, label: string): string {
+  enqueue(spec: JobSpec, label: string, archiveName?: string): string {
     const id = `j${++counter}`;
     this.jobs.update((current) => [
       ...current,
@@ -51,7 +53,8 @@ export class JobQueue {
         id,
         label,
         outputName: spec.outputName,
-        inputBytes: spec.media.size,
+        archiveName,
+        inputBytes: spec.inputs.reduce((sum, media) => sum + media.size, 0),
         spec,
         status: 'waiting',
       },

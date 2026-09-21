@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { saveBlob } from '../../media/file-system/save';
+import { saveResult } from '../core/save-result';
 import { formatBytes } from '../../media/humanize';
 import { JobQueue, type QueuedJob } from '../core/job-queue';
 import { Button } from './ui';
@@ -56,7 +56,12 @@ const STATUS_CLASSES: Readonly<Record<QueuedJob['status'], string>> = {
               </span>
 
               @if (job.result; as result) {
-                <span class="font-mono text-xs text-muted">{{ bytes(result.bytes) }}</span>
+                <span class="font-mono text-xs text-muted">
+                  @if (result.files.length > 1) {
+                    {{ result.files.length }} files ·
+                  }
+                  {{ bytes(result.bytes) }}
+                </span>
                 <button appButton variant="secondary" size="sm" type="button" (click)="save(job)">
                   {{ saved().has(job.id) ? 'Saved' : 'Save' }}
                 </button>
@@ -115,7 +120,7 @@ export class JobList {
 
   protected async save(job: QueuedJob): Promise<void> {
     if (!job.result) return;
-    const outcome = await saveBlob(job.result.blob, job.outputName);
+    const outcome = await saveResult(job);
     if (outcome === 'cancelled') return;
     this.saved.update((current) => new Set(current).add(job.id));
   }

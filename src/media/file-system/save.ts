@@ -1,3 +1,5 @@
+import { zipBlobs, type ZipEntry } from './zip';
+
 export type SaveOutcome = 'saved' | 'downloaded' | 'cancelled';
 
 /**
@@ -34,6 +36,41 @@ export async function saveBlob(blob: Blob, suggestedName: string): Promise<SaveO
   }
 
   download(blob, suggestedName);
+  return 'downloaded';
+}
+
+/**
+ * Writes a numbered run of files — frames, segments. Where the browser can
+ * write into a folder the user picks, each file lands there as itself;
+ * everywhere else they arrive as one zip, since a page that starts forty
+ * downloads at once gets all but the first blocked.
+ */
+export async function saveFiles(
+  files: readonly ZipEntry[],
+  archiveName: string,
+): Promise<SaveOutcome> {
+  const picker = (
+    window as Window & {
+      showDirectoryPicker?: (options: unknown) => Promise<FileSystemDirectoryHandle>;
+    }
+  ).showDirectoryPicker;
+
+  if (picker) {
+    try {
+      const folder = await picker.call(window, { mode: 'readwrite' });
+      for (const file of files) {
+        const handle = await folder.getFileHandle(file.name, { create: true });
+        const writable = await handle.createWritable();
+        await file.blob.stream().pipeTo(writable);
+      }
+      return 'saved';
+    } catch (error) {
+      if (isAbort(error)) return 'cancelled';
+      // Same reasoning as a single file: fall back rather than lose the work.
+    }
+  }
+
+  download(await zipBlobs(files), archiveName);
   return 'downloaded';
 }
 

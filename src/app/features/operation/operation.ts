@@ -12,13 +12,17 @@ import {
   type Type,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { saveBlob } from '../../../media/file-system/save';
 import { formatBytes, formatDuration } from '../../../media/humanize';
 import {
   applyChange,
+  archiveNameFor,
+  hasManyOutputs,
   initialOptions,
+  isMultiInput,
   outputNameFor,
+  pickInputs,
   previewCommand,
+  sequenceName,
   type OptionValue,
   type OptionValues,
 } from '../../../media/operations/descriptor';
@@ -27,6 +31,7 @@ import { JobList } from '../../components/job-list';
 import { OperationForm } from '../../components/operation-form';
 import { Button, Disclosure, Progress } from '../../components/ui';
 import { JobQueue } from '../../core/job-queue';
+import { saveResult } from '../../core/save-result';
 import { Selection } from '../../core/selection';
 import { CUSTOM_FORMS, type CustomFormInputs } from './custom-forms';
 
@@ -70,7 +75,48 @@ export class OperationScreen implements OnInit {
     return media ? this.selection.info().get(media.id) : undefined;
   });
 
-  protected readonly context = computed(() => ({ media: this.media(), info: this.info() }));
+  protected readonly multiInput = computed(() => {
+    const descriptor = this.descriptor();
+    return descriptor ? isMultiInput(descriptor) : false;
+  });
+
+  protected readonly manyOutputs = computed(() => {
+    const descriptor = this.descriptor();
+    return descriptor ? hasManyOutputs(descriptor) : false;
+  });
+
+  /**
+   * What the job will read: every matching file, in the selection's order,
+   * for a multi-input operation; the chosen one otherwise.
+   */
+  protected readonly inputs = computed(() => {
+    const descriptor = this.descriptor();
+    const media = this.media();
+    if (!descriptor || !media) return [];
+    return this.multiInput() ? pickInputs(descriptor, this.selection.files()) : [media];
+  });
+
+  protected readonly inputBytes = computed(() =>
+    this.inputs().reduce((sum, media) => sum + media.size, 0),
+  );
+
+  protected readonly inputDuration = computed(() => {
+    const durations = this.inputs().map(
+      (media) => this.selection.info().get(media.id)?.durationSeconds,
+    );
+    if (durations.some((value) => value === undefined)) return undefined;
+    return durations.reduce<number>((sum, value) => sum + (value ?? 0), 0);
+  });
+
+  protected readonly context = computed(() => {
+    const inputs = this.inputs();
+    const infos = this.selection.info();
+    return {
+      media: inputs[0],
+      info: inputs[0] ? infos.get(inputs[0].id) : undefined,
+      inputs: inputs.map((media) => ({ media, info: infos.get(media.id) })),
+    };
+  });
 
   protected readonly options = signal<OptionValues>({});
   /** Which operation the current options belong to, so a route change resets them. */
@@ -96,17 +142,17 @@ export class OperationScreen implements OnInit {
   );
 
   protected readonly savedPercent = computed(() => {
-    const media = this.media();
+    const total = this.inputBytes();
     const estimate = this.estimate();
-    if (!media || estimate === undefined) return undefined;
-    return Math.round((1 - estimate / media.size) * 100);
+    if (!total || estimate === undefined) return undefined;
+    return Math.round((1 - estimate / total) * 100);
   });
 
   protected readonly resultSavedPercent = computed(() => {
-    const media = this.media();
+    const total = this.inputBytes();
     const result = this.job()?.result;
-    if (!media || !result) return undefined;
-    return Math.round((1 - result.bytes / media.size) * 100);
+    if (!total || !result) return undefined;
+    return Math.round((1 - result.bytes / total) * 100);
   });
 
   protected readonly command = computed(() => {
@@ -118,7 +164,9 @@ export class OperationScreen implements OnInit {
   protected readonly outputName = computed(() => {
     const descriptor = this.descriptor();
     if (!descriptor) return 'output';
-    return outputNameFor(descriptor, this.options(), this.context());
+    const name = outputNameFor(descriptor, this.options(), this.context());
+    // The pattern means nothing to a person; the first real name does.
+    return this.manyOutputs() ? sequenceName(name, '0001') : name;
   });
 
   /** The runner's live state, but only while it is this screen's job running. */
@@ -175,10 +223,10 @@ export class OperationScreen implements OnInit {
       void CUSTOM_FORMS[key]?.().then((component) => this.customForm.set(component));
     });
 
-    // Opening an operation is intent: we need the real duration and codecs.
+    // Opening an operation is intent: we need the real duration and codecs —
+    // of every input, since a join has to know which clips are silent.
     effect(() => {
-      const media = this.media();
-      if (media) void this.selection.deepProbe(media.id);
+      for (const media of this.inputs()) void this.selection.deepProbe(media.id);
     });
   }
 
@@ -200,28 +248,50 @@ export class OperationScreen implements OnInit {
     this.saveState.set('idle');
   }
 
+  /** Moves an input one place earlier or later — the order is the content of a join. */
+  protected move(id: string, delta: -1 | 1): void {
+    const inputs = this.inputs();
+    const index = inputs.findIndex((media) => media.id === id);
+    const neighbour = inputs[index + delta];
+    if (index === -1 || !neighbour) return;
+
+    const order = this.selection.files().map((media) => media.id);
+    const a = order.indexOf(id);
+    const b = order.indexOf(neighbour.id);
+    [order[a], order[b]] = [order[b], order[a]];
+    this.selection.reorder(order);
+  }
+
   protected start(): void {
     const descriptor = this.descriptor();
-    const media = this.media();
+    const inputs = this.inputs();
+    const media = inputs[0];
     if (!descriptor || !media) return;
 
     const options = this.options();
     const context = this.context();
+    const heights = context.inputs
+      .map((entry) => entry.info?.height)
+      .filter((height): height is number => height !== undefined);
 
     const id = this.queue.enqueue(
       {
-        media,
+        inputs,
         outputName: outputNameFor(descriptor, options, context),
+        outputs: descriptor.outputs ?? 'one',
         outputMime: descriptor.outputMime(options, context),
         // Captured by value: editing the form afterwards cannot change a job
         // that is already queued.
         build: (paths) => descriptor.build(options, paths, context),
         durationSeconds:
           descriptor.outputDuration?.(options, context) ?? context.info?.durationSeconds,
-        sourceHeight: context.info?.height,
+        sourceHeight: heights.length ? Math.max(...heights) : undefined,
         estimatedOutputBytes: descriptor.estimateBytes?.(options, context),
       },
-      `${descriptor.verb} · ${media.name}`,
+      inputs.length > 1
+        ? `${descriptor.verb} · ${media.name} and ${inputs.length - 1} more`
+        : `${descriptor.verb} · ${media.name}`,
+      this.manyOutputs() ? archiveNameFor(descriptor, context) : undefined,
     );
 
     this.jobId.set(id);
@@ -231,7 +301,7 @@ export class OperationScreen implements OnInit {
   protected async save(): Promise<void> {
     const job = this.job();
     if (!job?.result) return;
-    const outcome = await saveBlob(job.result.blob, job.outputName);
+    const outcome = await saveResult(job);
     if (outcome !== 'cancelled') this.saveState.set('saved');
   }
 

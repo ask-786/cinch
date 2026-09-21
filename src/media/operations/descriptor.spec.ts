@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyChange,
+  archiveNameFor,
+  canRun,
   decodeChoice,
   defineOperation,
   encodeChoice,
   initialOptions,
+  isMultiInput,
   outputNameFor,
+  pickInputs,
   previewCommand,
+  sequenceName,
   timestamp,
   visibleFields,
   type Choice,
+  type Operation,
 } from './descriptor';
 
 type Options = {
@@ -156,6 +162,66 @@ describe('outputNameFor', () => {
   it('copes with a file that has no extension', () => {
     const named = { media: { ...context.media, name: 'clip', extension: '' } };
     expect(outputNameFor(operation, operation.defaults, named)).toBe('clip-tested.mp4');
+  });
+});
+
+describe('many inputs and outputs', () => {
+  const joining: Operation = {
+    ...operation,
+    id: 'test-join',
+    inputs: { min: 2, max: 3 },
+    build: (_values, paths) => [
+      ...paths.inputPaths.flatMap((path) => ['-i', path]),
+      paths.outputPath,
+    ],
+  };
+  const numbering: Operation = {
+    ...operation,
+    id: 'test-frames',
+    outputs: 'many',
+    outputExtension: () => 'jpg',
+  };
+
+  const file = (id: string, kind: 'video' | 'audio' = 'video') => ({ id, kind });
+
+  it('treats an operation without an input count as taking exactly one file', () => {
+    expect(isMultiInput(operation)).toBe(false);
+    expect(isMultiInput(joining)).toBe(true);
+  });
+
+  it('only opens when enough of the right files are selected', () => {
+    expect(canRun(operation, ['video'])).toBe(true);
+    expect(canRun(joining, ['video'])).toBe(false);
+    expect(canRun(joining, ['video', 'audio'])).toBe(false);
+    expect(canRun(joining, ['video', 'video'])).toBe(true);
+  });
+
+  it('picks the matching files in order, up to the limit', () => {
+    const files = [file('a'), file('b', 'audio'), file('c'), file('d'), file('e')];
+    expect(pickInputs(joining, files).map((f) => f.id)).toEqual(['a', 'c', 'd']);
+  });
+
+  it('names a numbered run as a pattern, and each file from it', () => {
+    const pattern = outputNameFor(numbering, numbering.defaults, context);
+    expect(pattern).toBe('my holiday-tested-%04d.jpg');
+    expect(sequenceName(pattern, '0007')).toBe('my holiday-tested-0007.jpg');
+    expect(archiveNameFor(numbering, context)).toBe('my holiday-tested.zip');
+  });
+
+  it('keeps a percent sign in the file name from reading as a second pattern', () => {
+    const odd = { media: { ...context.media, name: '100% real.mov' } };
+    expect(outputNameFor(numbering, numbering.defaults, odd)).toBe('100 real-tested-%04d.jpg');
+  });
+
+  it('previews every input by its real name', () => {
+    const second = { ...context.media, id: 'f2', name: 'b.mov' };
+    const both = {
+      ...context,
+      inputs: [{ media: context.media }, { media: second }],
+    };
+    expect(previewCommand(joining, joining.defaults, both)).toBe(
+      `ffmpeg -i 'my holiday.mov' -i b.mov 'my holiday-tested.mp4'`,
+    );
   });
 });
 
