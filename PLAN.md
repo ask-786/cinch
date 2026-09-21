@@ -295,8 +295,8 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 **Images**
 
 - [ ] Images → video · [ ] Video → images · [ ] GIF conversion
-- [x] Join videos (`concat`) · [ ] Side by side and grids (`hstack`/`vstack`/`xstack`)
-- [ ] Watermark or text over a frame · [ ] Split into segments · [ ] Strip or fix metadata
+- [x] Join videos (`concat`) · [x] Side by side and grids (`hstack`/`vstack`/`xstack`)
+- [x] Logo over a video (`overlay`) · [ ] Text over a frame (`drawtext`, needs the `.ttf`) · [ ] Split into segments · [ ] Strip or fix metadata
 
 **Subtitles**
 
