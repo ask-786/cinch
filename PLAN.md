@@ -268,6 +268,8 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [x] **Mixed inputs.** `requires` names kinds the selection must contain, on top of the count:
       replacing a video's sound takes two files, one of them a video. Measured on the core's 5.1:
       `apad` with `-shortest` ends cleanly, and `amix` takes `normalize=0`.
+- Measured: the system FFmpeg 7.1 cuts `-f segment` MP4 output on the wrong keyframe (15 s
+  then 10 s for a 10 s split); the core's 5.1 cuts 10/10/5 as asked. Check segments in the browser.
 - Measured on the MT core: a `-filter_complex` graph hangs it unless pinned with
   `-filter_complex_threads 1` — `withThreads` adds that alongside `-threads`.
 - Measured on the core's FFmpeg 5.1: `fps=1/N` drops the last frame of a run; extract frames
@@ -282,8 +284,8 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 **Extract**
 
-- [x] Extract audio · [x] Extract frames · [ ] Create GIF · [ ] Generate thumbnails
-- [ ] Scene-based thumbnails (`thumbnail`, `select`) · [ ] Animated WebP and APNG
+- [x] Extract audio · [x] Extract frames · [ ] Create GIF · [x] Generate thumbnails (a contact sheet)
+- [x] Scene-based thumbnails (`select` on `scene`) · [ ] Animated WebP and APNG
 
 **Audio**
 
@@ -294,9 +296,9 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 **Images**
 
-- [ ] Images → video · [ ] Video → images · [ ] GIF conversion
+- [x] Images → video · [x] Video → images (extract frames) · [ ] GIF conversion
 - [x] Join videos (`concat`) · [x] Side by side and grids (`hstack`/`vstack`/`xstack`)
-- [x] Logo over a video (`overlay`) · [ ] Text over a frame (`drawtext`, needs the `.ttf`) · [ ] Split into segments · [ ] Strip or fix metadata
+- [x] Logo over a video (`overlay`) · [ ] Text over a frame (`drawtext`, needs the `.ttf`) · [x] Split into segments · [ ] Strip or fix metadata
 
 **Subtitles**
 

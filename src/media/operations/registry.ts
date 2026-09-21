@@ -3,6 +3,7 @@ import { audioExtract } from './audio-extract';
 import { audioMerge } from './audio-merge';
 import { audioRemove } from './audio-remove';
 import { audioReplace } from './audio-replace';
+import { imagesVideo } from './images-video';
 import { canRun, type Operation, type OperationGroup } from './descriptor';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
@@ -11,8 +12,11 @@ import { videoFrames } from './video-frames';
 import { videoJoin } from './video-join';
 import { videoResize } from './video-resize';
 import { videoRotate } from './video-rotate';
+import { videoScenes } from './video-scenes';
+import { videoSegments } from './video-segments';
 import { videoSpeed } from './video-speed';
 import { videoStack } from './video-stack';
+import { videoThumbnails } from './video-thumbnails';
 import { videoTrim } from './video-trim';
 import { videoWatermark } from './video-watermark';
 
@@ -29,6 +33,7 @@ export const OPERATIONS: readonly Operation[] = [
   videoSpeed,
   videoFps,
   videoTrim,
+  videoSegments,
   videoJoin,
   videoStack,
   videoWatermark,
@@ -37,6 +42,9 @@ export const OPERATIONS: readonly Operation[] = [
   audioReplace,
   audioRemove,
   videoFrames,
+  videoThumbnails,
+  videoScenes,
+  imagesVideo,
 ];
 
 export function operationByRoute(route: string | null | undefined): Operation | undefined {
