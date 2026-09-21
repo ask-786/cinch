@@ -1,5 +1,6 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation, type Choice } from './descriptor';
+import { VP8_CRF_RANGE, vp8QualityArgs } from './vp8-output';
 
 /**
  * Change the container, and re-encode only if asked. Compression's sibling:
@@ -7,7 +8,7 @@ import { defineOperation, type Choice } from './descriptor';
  */
 
 export type ContainerFormat = 'mp4' | 'webm' | 'mkv' | 'mov';
-export type VideoTrack = 'copy' | 'h264' | 'h265' | 'vp9';
+export type VideoTrack = 'copy' | 'h264' | 'h265' | 'vp8';
 export type AudioTrack = 'copy' | 'aac' | 'opus' | 'none';
 
 export type VideoConvertOptions = {
@@ -29,8 +30,8 @@ export const DEFAULT_CONVERT: VideoConvertOptions = {
 const CONTAINER_VIDEO: Readonly<Record<ContainerFormat, readonly Exclude<VideoTrack, 'copy'>[]>> = {
   mp4: ['h264', 'h265'],
   mov: ['h264', 'h265'],
-  mkv: ['h264', 'h265', 'vp9'],
-  webm: ['vp9'],
+  mkv: ['h264', 'h265', 'vp8'],
+  webm: ['vp8'],
 };
 
 const CONTAINER_AUDIO: Readonly<Record<ContainerFormat, readonly Exclude<AudioTrack, 'none'>[]>> = {
@@ -65,7 +66,7 @@ export const CONTAINER_MIME: Readonly<Record<ContainerFormat, string>> = {
 const CRF_RANGE: Readonly<Record<Exclude<VideoTrack, 'copy'>, readonly [number, number]>> = {
   h264: [34, 16],
   h265: [39, 21],
-  vp9: [40, 22],
+  vp8: VP8_CRF_RANGE,
 };
 
 export function convertCrf(quality: number, codec: Exclude<VideoTrack, 'copy'>): number {
@@ -104,6 +105,7 @@ export function canCopyAudio(format: ContainerFormat, info: MediaInfo | undefine
 export function buildVideoConvertArgs(
   options: VideoConvertOptions,
   paths: { inputPath: string; outputPath: string },
+  info?: MediaInfo,
 ): string[] {
   const args = ['-i', paths.inputPath];
 
@@ -137,19 +139,8 @@ export function buildVideoConvertArgs(
         'yuv420p',
       );
       break;
-    case 'vp9':
-      args.push(
-        '-c:v',
-        'libvpx-vp9',
-        '-row-mt',
-        '1',
-        '-deadline',
-        'realtime',
-        '-crf',
-        String(convertCrf(options.quality, 'vp9')),
-        '-b:v',
-        '0',
-      );
+    case 'vp8':
+      args.push(...vp8QualityArgs(options.quality, info));
       break;
   }
 
@@ -181,7 +172,7 @@ function videoChoices(format: ContainerFormat, info: MediaInfo | undefined): rea
   const labels: Record<Exclude<VideoTrack, 'copy'>, string> = {
     h264: 'H.264',
     h265: 'H.265',
-    vp9: 'VP9',
+    vp8: 'VP8',
   };
   return [
     {
@@ -310,7 +301,7 @@ export const videoConvert = defineOperation<VideoConvertOptions>({
     return warnings;
   },
 
-  build: (options, paths) => buildVideoConvertArgs(options, paths),
+  build: (options, paths, context) => buildVideoConvertArgs(options, paths, context.info),
   outputExtension: (options) => options.format,
   outputMime: (options) => CONTAINER_MIME[options.format],
 

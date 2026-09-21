@@ -46,13 +46,15 @@ describe('buildVideoConvertArgs', () => {
     expect(args[args.indexOf('-tag:v') + 1]).toBe('hvc1');
   });
 
-  it('gives VP9 the constant-quality pairing it needs', () => {
+  it('encodes WebM as VP8, with the bitrate ceiling its CRF needs', () => {
     const args = buildVideoConvertArgs(
-      options({ format: 'webm', video: 'vp9', audio: 'opus' }),
+      options({ format: 'webm', video: 'vp8', audio: 'opus' }),
       paths,
+      { source: 'ffprobe', kind: 'video', width: 1280, height: 720, frameRate: 30 },
     );
-    expect(args).toContain('-b:v');
-    expect(args[args.indexOf('-b:v') + 1]).toBe('0');
+    expect(args[args.indexOf('-c:v') + 1]).toBe('libvpx');
+    expect(args[args.indexOf('-b:v') + 1]).toBe('1935k');
+    expect(args).not.toContain('libvpx-vp9');
     expect(args).not.toContain('-movflags');
   });
 
@@ -87,7 +89,7 @@ describe('the convert descriptor', () => {
 
   it('re-encodes when the chosen container cannot copy the source', () => {
     const next = normalize(options({ format: 'webm' }), h264Info);
-    expect(next.video).toBe('vp9');
+    expect(next.video).toBe('vp8');
     expect(next.audio).toBe('opus');
   });
 

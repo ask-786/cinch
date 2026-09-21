@@ -9,6 +9,7 @@ import {
   videoBitrateBps,
   type VideoCompressionOptions,
 } from './video-compress';
+import { vp8CeilingKbps } from './vp8-output';
 
 const info: MediaInfo = {
   source: 'ffprobe',
@@ -37,7 +38,7 @@ describe('qualityToCrf', () => {
   it('puts the default slider position on each codec’s usual default', () => {
     expect(qualityToCrf(60, 'h264')).toBe(23);
     expect(qualityToCrf(60, 'h265')).toBe(28);
-    expect(qualityToCrf(60, 'vp9')).toBe(29);
+    expect(qualityToCrf(60, 'vp8')).toBe(22);
   });
 
   it('runs the right way round: more quality is a lower CRF', () => {
@@ -71,12 +72,22 @@ describe('buildVideoCompressionArgs', () => {
   });
 
   it('switches to Opus for WebM', () => {
-    const args = buildVideoCompressionArgs(options({ format: 'webm', codec: 'vp9' }), context);
-    expect(valueAfter(args, '-c:v')).toBe('libvpx-vp9');
+    const args = buildVideoCompressionArgs(options({ format: 'webm', codec: 'vp8' }), context);
+    expect(valueAfter(args, '-c:v')).toBe('libvpx');
     expect(valueAfter(args, '-c:a')).toBe('libopus');
-    // VP9 needs an explicit zero bitrate for constant quality to apply.
-    expect(valueAfter(args, '-b:v')).toBe('0');
+    // VP8 treats the bitrate as a ceiling on its CRF, and needs one.
+    expect(valueAfter(args, '-b:v')).toMatch(/^\d+k$/);
     expect(args).not.toContain('-movflags');
+  });
+
+  it('sizes the VP8 ceiling for the downscaled frame, not the source', () => {
+    const args = buildVideoCompressionArgs(
+      options({ format: 'webm', codec: 'vp8', maxHeight: 720 }),
+      context,
+    );
+    expect(valueAfter(args, '-b:v')).toBe(
+      `${vp8CeilingKbps({ width: 1280, height: 720, frameRate: 30 })}k`,
+    );
   });
 
   it('tags H.265 so Apple players will open it', () => {
@@ -167,6 +178,12 @@ describe('estimateOutputBytes', () => {
     expect(estimateOutputBytes(options({ quality: 30 }), info)!).toBeLessThan(base);
     expect(estimateOutputBytes(options({ maxHeight: 720 }), info)!).toBeLessThan(base);
     expect(estimateOutputBytes(options({ codec: 'h265' }), info)!).toBeLessThan(base);
+  });
+
+  it('never puts VP8 past its bitrate ceiling', () => {
+    const webm = options({ format: 'webm', codec: 'vp8', quality: 95, audio: 'none' });
+    const ceilingBytes = (vp8CeilingKbps(info) * 1000 * 60) / 8;
+    expect(estimateOutputBytes(webm, info)).toBe(Math.round(ceilingBytes));
   });
 
   it('says nothing when it has nothing to go on', () => {

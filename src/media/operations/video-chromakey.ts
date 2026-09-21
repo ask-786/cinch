@@ -1,8 +1,8 @@
-import type { MediaInfo } from '../models/media-info';
 import type { MediaKind } from '../models/media-kind';
 import { defineOperation, type OperationContext, type OperationInput } from './descriptor';
 import { h264OutputArgs, sameSizeEstimate } from './h264-output';
 import { qualityToCrf } from './video-compress';
+import { vp8CeilingKbps, vp8Crf, vp8QualityArgs } from './vp8-output';
 
 /**
  * Take out a green (or blue) screen.
@@ -10,12 +10,8 @@ import { qualityToCrf } from './video-compress';
  * With a picture alongside the video, the picture becomes the new background,
  * enlarged to cover the frame. Without one, the result is a WebM with a real
  * transparent background, for dropping into an editor — MP4 and H.264 have no
- * way to carry transparency, VP8 in WebM does.
- *
- * VP8 rather than VP9: the core's libvpx-vp9 encoder crashes on its first
- * packet of real footage ("memory access out of bounds" on the MT core, the ST
- * core too), alpha or not. Flat test colours get through, which hid it.
- * VP8 refuses alpha unless alt-ref frames are off.
+ * way to carry transparency, VP8 in WebM does (see vp8-output for why not
+ * VP9). VP8 refuses alpha unless alt-ref frames are off.
  *
  * The picture is looped into a clip at the video's own frame rate. Left to its
  * default of 25 it would set the pace for `overlay`, and a 30 fps video would
@@ -51,29 +47,7 @@ const FALLBACK_WIDTH = 1280;
 const FALLBACK_HEIGHT = 720;
 const FALLBACK_FPS = 30;
 
-/** VP8's CRF, worst to best. Its scale runs 4–63 and it needs more bits than VP9 for the same look. */
-const VP8_CRF_RANGE = [40, 10] as const;
-
-/**
- * VP8 in constrained-quality mode needs a ceiling as well as a CRF. 0.07 bits
- * a pixel is about 1.9 Mb/s at 720p30, which keyed footage stays well under
- * once the background is flat.
- */
-const BITS_PER_PIXEL = 0.07;
 const OPUS_KBPS = 128;
-
-export function vp8Crf(quality: number): number {
-  const [worst, best] = VP8_CRF_RANGE;
-  const clamped = Math.min(100, Math.max(0, quality));
-  return Math.round(worst - (clamped / 100) * (worst - best));
-}
-
-export function alphaVideoKbps(info: MediaInfo | undefined): number {
-  const width = info?.width ?? FALLBACK_WIDTH;
-  const height = info?.height ?? FALLBACK_HEIGHT;
-  const fps = info?.frameRate ?? FALLBACK_FPS;
-  return Math.round((width * height * fps * BITS_PER_PIXEL) / 1000);
-}
 
 /** Which input is the video and which, if any, the background. */
 export function chromakeyRoles(kinds: readonly (MediaKind | undefined)[]): {
@@ -120,18 +94,11 @@ export function buildVideoChromakeyArgs(
   if (roles.background === undefined) {
     args.push('-vf', keyFilter(options));
     args.push(
-      '-c:v',
-      'libvpx',
+      ...vp8QualityArgs(options.quality, video),
       '-pix_fmt',
       'yuva420p',
       '-auto-alt-ref',
       '0',
-      '-crf',
-      String(vp8Crf(options.quality)),
-      '-b:v',
-      `${alphaVideoKbps(video)}k`,
-      '-deadline',
-      'realtime',
       '-c:a',
       'libopus',
       '-b:a',
@@ -256,7 +223,7 @@ export const videoChromakey = defineOperation<VideoChromakeyOptions>({
     // The alpha plane is a second VP8 stream under the same cap, so busy
     // footage can reach twice it (measured: 3.8 Mb/s against 1.9 on a 720×1280 clip).
     if (info?.durationSeconds === undefined) return undefined;
-    const kbps = 2 * alphaVideoKbps(info) + OPUS_KBPS;
+    const kbps = 2 * vp8CeilingKbps(info) + OPUS_KBPS;
     return Math.round((kbps * 1000 * info.durationSeconds) / 8);
   },
 });

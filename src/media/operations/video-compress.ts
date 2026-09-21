@@ -1,8 +1,9 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation, type Choice } from './descriptor';
+import { vp8CeilingKbps, VP8_CRF_RANGE, type FrameShape } from './vp8-output';
 
 export type VideoFormat = 'mp4' | 'webm' | 'mkv' | 'mov';
-export type VideoCodec = 'h264' | 'h265' | 'vp9';
+export type VideoCodec = 'h264' | 'h265' | 'vp8';
 export type AudioQuality = 'small' | 'good' | 'high' | 'none';
 export type CompressionMode = 'quality' | 'size';
 
@@ -44,7 +45,7 @@ export const DEFAULT_COMPRESSION: VideoCompressionOptions = {
 const CRF_RANGE: Readonly<Record<VideoCodec, readonly [worst: number, best: number]>> = {
   h264: [34, 16],
   h265: [39, 21],
-  vp9: [40, 22],
+  vp8: VP8_CRF_RANGE,
 };
 
 export function qualityToCrf(quality: number, codec: VideoCodec): number {
@@ -63,8 +64,8 @@ const AUDIO_BITRATE_KBPS: Readonly<Record<Exclude<AudioQuality, 'none'>, number>
 export const FORMAT_CODECS: Readonly<Record<VideoFormat, readonly VideoCodec[]>> = {
   mp4: ['h264', 'h265'],
   mov: ['h264', 'h265'],
-  mkv: ['h264', 'h265', 'vp9'],
-  webm: ['vp9'],
+  mkv: ['h264', 'h265', 'vp8'],
+  webm: ['vp8'],
 };
 
 export interface BuildContext {
@@ -121,15 +122,8 @@ function videoArgs(options: VideoCompressionOptions, info?: MediaInfo): string[]
         'yuv420p',
       );
       break;
-    case 'vp9':
-      args.push(
-        '-c:v',
-        'libvpx-vp9',
-        '-row-mt',
-        '1',
-        '-deadline',
-        options.takeLonger ? 'good' : 'realtime',
-      );
+    case 'vp8':
+      args.push('-c:v', 'libvpx', '-deadline', options.takeLonger ? 'good' : 'realtime');
       break;
   }
 
@@ -144,9 +138,20 @@ function videoArgs(options: VideoCompressionOptions, info?: MediaInfo): string[]
 
   const crf = qualityToCrf(options.quality, options.codec);
   args.push('-crf', String(crf));
-  if (options.codec === 'vp9') args.push('-b:v', '0');
+  // VP8 wants a ceiling alongside the CRF (see vp8-output).
+  if (options.codec === 'vp8') args.push('-b:v', `${vp8CeilingKbps(outputFrame(options, info))}k`);
 
   return args;
+}
+
+/** The frame that comes out, after any downscale. Undefined while the size is being read. */
+function outputFrame(
+  options: VideoCompressionOptions,
+  info?: MediaInfo,
+): (FrameShape & { width: number; height: number }) | undefined {
+  if (!info?.width || !info.height) return undefined;
+  const height = options.maxHeight ? Math.min(options.maxHeight, info.height) : info.height;
+  return { width: info.width * (height / info.height), height, frameRate: info.frameRate };
 }
 
 /** An average bitrate with a ceiling and a buffer, so a busy scene cannot blow past it. */
@@ -213,21 +218,20 @@ export function estimateOutputBytes(
   const duration = info?.durationSeconds;
   if (duration === undefined || duration <= 0) return undefined;
 
-  const height = options.maxHeight
-    ? Math.min(options.maxHeight, info?.height ?? options.maxHeight)
-    : info?.height;
-  const width = info?.width;
-  if (!height || !width) return undefined;
+  const frame = outputFrame(options, info);
+  if (!frame) return undefined;
 
-  const scale = info?.height ? height / info.height : 1;
-  const pixels = width * scale * height;
-  const fps = info?.frameRate ?? 30;
+  const pixels = frame.width * frame.height;
+  const fps = frame.frameRate ?? 30;
 
   const crf = qualityToCrf(options.quality, options.codec);
   const bitsPerPixel = 0.08 * Math.pow(2, (23 - crf) / 6);
-  // x265 and VP9 buy roughly a third off at the same perceived quality.
-  const codecFactor = options.codec === 'h264' ? 1 : 0.65;
-  const videoBps = pixels * fps * bitsPerPixel * codecFactor;
+  // x265 buys roughly a third off at the same perceived quality; VP8 about
+  // matches x264, and never goes past its ceiling.
+  const codecFactor = options.codec === 'h265' ? 0.65 : 1;
+  const rawBps = pixels * fps * bitsPerPixel * codecFactor;
+  const videoBps =
+    options.codec === 'vp8' ? Math.min(rawBps, vp8CeilingKbps(frame) * 1000) : rawBps;
 
   const audioBps = options.audio === 'none' ? 0 : AUDIO_BITRATE_KBPS[options.audio] * 1000;
   return Math.round(((videoBps + audioBps) * duration) / 8);
@@ -245,13 +249,13 @@ const MIME: Readonly<Record<VideoFormat, string>> = {
 const CODEC_LABELS: Readonly<Record<VideoCodec, string>> = {
   h264: 'H.264',
   h265: 'H.265',
-  vp9: 'VP9',
+  vp8: 'VP8',
 };
 
 const CODEC_NOTES: Readonly<Record<VideoCodec, string>> = {
   h264: 'plays everywhere',
   h265: 'smaller, fussier',
-  vp9: 'smaller, web only',
+  vp8: 'web only',
 };
 
 const HEIGHTS = [1080, 720, 480, 360] as const;
@@ -331,7 +335,7 @@ export const videoCompress = defineOperation<VideoCompressionOptions>({
       label: 'Format',
       choices: [
         { value: 'mp4', label: 'MP4', note: 'plays everywhere' },
-        { value: 'webm', label: 'WebM', note: 'smaller, web only' },
+        { value: 'webm', label: 'WebM', note: 'web only' },
         { value: 'mkv', label: 'MKV', note: 'anything goes' },
         { value: 'mov', label: 'MOV', note: 'QuickTime' },
       ],
