@@ -187,7 +187,8 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 ### Settled parameters
 
-- **Quality slider → CRF**, per encoder: x264 `34→16` (default 60 ≈ CRF 23), VP9 `40→22`, x265 `39→21`.
+- **Quality slider → CRF**, per encoder: x264 `34→16` (default 60 ≈ CRF 23), VP8 `40→10` with a
+  0.07 bits-a-pixel `-b:v` ceiling, x265 `39→21`. WebM is VP8: the core's VP9 encoder crashes (below).
 - **Encoder speed**: x264 `veryfast` default; "take longer for better quality" switches to `medium`.
 - **Audio**: AAC 128k Good / 192k High / 96k Small. Opus for WebM.
 - **Formats**: video MP4, WebM, MKV, MOV · audio MP3, M4A, Opus, WAV, FLAC, OGG · image PNG, JPG, WebP.
@@ -278,9 +279,21 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 **Video**
 
 - [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [ ] Crop · [x] Trim
-- [x] Change FPS · [ ] Change quality · [ ] Change bitrate
-- [x] Rotate and flip · [x] Speed up / slow down · [ ] Reverse · [ ] Deinterlace
-- [ ] Pad to an aspect ratio · [ ] Colour adjust, sharpen, blur · [ ] Remove a green screen
+- [x] Change FPS · [x] Change quality (Compress's quality mode) · [x] Change bitrate
+- [x] Rotate and flip · [x] Speed up / slow down · [x] Reverse · [x] Deinterlace
+- [x] Pad to an aspect ratio · [x] Colour adjust, sharpen, blur · [x] Remove a green screen
+- Measured on the core's 5.1: reverse buffers raw frames, so the cap is 500 MB of them
+  (about 11 s of 720p30); a 480 MB buffer reverses fine on the MT core's fixed heap.
+- Measured: a picture looped with `-loop 1` runs at 25 fps and sets `overlay`'s pace, so a
+  30 fps video comes out at 25. Green screen passes the video's rate as `-framerate`.
+- Measured on the core's 5.1: libvpx-vp9 crashes on the first packet of real footage
+  ("memory access out of bounds" on MT, a crash or hang on ST), with or without alpha, and
+  `-row-mt`, `-deadline`, `-cpu-used`, `-auto-alt-ref` and `-lag-in-frames` don't help. Flat
+  test colours encode fine, which hid it. Transparent green screen uses VP8 (`-auto-alt-ref 0`
+  is required with alpha). Compress and Convert encode WebM as VP8 too; VP9 input still
+  decodes and copies fine.
+- Measured: most of a blurred-bars pad's time is encoding the bigger frame, not the blur;
+  blurring at a quarter size still cut the filter's own cost 3–4×.
 
 **Extract**
 
