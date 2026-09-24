@@ -62,6 +62,18 @@ export const ACCEPTED_EXTENSIONS: readonly string[] = Object.keys(BY_EXTENSION);
 
 export const ACCEPT_ATTRIBUTE = ACCEPTED_EXTENSIONS.map((ext) => `.${ext}`).join(',');
 
+/**
+ * The same list narrowed to what one operation can use, so the file dialog on
+ * an operation's own screen does not offer files it would only reject.
+ */
+export function acceptAttributeFor(kinds: readonly MediaKind[]): string {
+  if (kinds.length === 0) return ACCEPT_ATTRIBUTE;
+  return Object.entries(BY_EXTENSION)
+    .filter(([, kind]) => kinds.includes(kind))
+    .map(([ext]) => `.${ext}`)
+    .join(',');
+}
+
 export function extensionOf(fileName: string): string {
   const dot = fileName.lastIndexOf('.');
   return dot > 0 ? fileName.slice(dot + 1).toLowerCase() : '';

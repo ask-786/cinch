@@ -163,6 +163,12 @@ export interface OperationDescriptor<O extends OptionValues> {
    */
   readonly requires?: readonly MediaKind[];
   /**
+   * What to ask for when the operation is opened with nothing to work on.
+   * `requirementOf` phrases this from `accepts` and `inputs` on its own; set it
+   * only where those cannot say it — a video *and* an image, not two of either.
+   */
+  readonly needs?: string;
+  /**
    * `'many'` for operations that write a numbered run of files — frames,
    * thumbnails, segments. Their output path carries `SEQUENCE_TOKEN`, and the
    * result is saved as a folder or a zip.
@@ -239,6 +245,56 @@ export function canRun(operation: Operation, kinds: readonly MediaKind[]): boole
   const matching = kinds.filter((kind) => operation.accepts.includes(kind)).length;
   const required = operation.requires ?? [];
   return matching >= inputCountOf(operation).min && required.every((kind) => kinds.includes(kind));
+}
+
+/**
+ * What the operation needs, for the screen that has to ask for it: "A video
+ * file", "Two or more audio files". Phrased from the descriptor so a new
+ * operation gets a sentence without writing one.
+ */
+export function requirementOf(operation: Operation): string {
+  if (operation.needs) return operation.needs;
+
+  const { min, max } = inputCountOf(operation);
+  const nouns = operation.accepts.map((kind) => KIND_NOUNS[kind]);
+  const phrase = nouns.join(' or ');
+
+  if (max === 1) return `${article(phrase)} ${phrase} file`;
+  const count = capitalize(numberWord(min));
+  return `${count}${max === undefined || max > min ? ' or more' : ''} ${phrase} files`;
+}
+
+const KIND_NOUNS: Readonly<Record<MediaKind, string>> = {
+  video: 'video',
+  audio: 'audio',
+  image: 'image',
+  subtitle: 'subtitle',
+};
+
+const NUMBER_WORDS = [
+  'no',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+];
+
+function numberWord(count: number): string {
+  return NUMBER_WORDS[count] ?? String(count);
+}
+
+function article(phrase: string): string {
+  return /^[aeiou]/i.test(phrase) ? 'An' : 'A';
+}
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 export function choicesOf(

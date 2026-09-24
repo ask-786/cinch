@@ -7,6 +7,10 @@
       Compress a video, pull the audio out of it, cut a clip, make a GIF. Everything happens inside
       this browser tab — your file is never uploaded anywhere.
     </p>
+    <p class="mx-auto mt-3 max-w-xl text-pretty text-sm text-faint">
+      Drop a file to see what you can do with it, or pick a job from the list below and bring the
+      file after.
+    </p>
   </section>
 }
 
@@ -77,42 +81,12 @@
     </div>
   }
 
-  @if (selection.rejected().length > 0) {
-    <div class="mt-4 rounded-card border border-line bg-danger-soft p-4">
-      <div class="flex items-start justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-ink">
-            {{
-              selection.rejected().length === 1 ? 'One file was skipped' : 'Some files were skipped'
-            }}
-          </p>
-          <ul class="mt-2 space-y-1.5 text-sm text-muted">
-            @for (item of selection.rejected(); track item.name) {
-              <li>
-                <span class="font-medium text-ink">{{ item.name }}</span>
-                <span class="px-1 text-faint">—</span>{{ item.reason }}
-              </li>
-            }
-          </ul>
-        </div>
-        <button
-          type="button"
-          (click)="selection.dismissRejections()"
-          aria-label="Dismiss"
-          class="-m-1.5 shrink-0 rounded-md p-1.5 text-faint transition-colors hover:text-ink"
-        >
-          <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="m4 4 8 8M12 4l-8 8"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
-  }
+  <div class="mt-4">
+    <app-rejected-files
+      [files]="selection.rejected()"
+      (dismissed)="selection.dismissRejections()"
+    />
+  </div>
 </section>
 
 <div class="mt-6">
@@ -126,9 +100,15 @@
     @for (group of catalogue; track group.group) {
       <div class="bg-surface p-5">
         <h2 class="text-sm font-semibold text-ink">{{ group.label }}</h2>
-        <ul class="mt-2.5 space-y-1.5 text-sm text-muted">
+        <ul class="mt-2.5 space-y-1.5 text-sm">
           @for (operation of group.operations; track operation.id) {
-            <li>{{ operation.title }}</li>
+            <li>
+              <a
+                [routerLink]="['/', operation.route]"
+                class="text-muted underline-offset-2 transition-colors hover:text-ink hover:underline"
+                >{{ operation.title }}</a
+              >
+            </li>
           }
         </ul>
       </div>

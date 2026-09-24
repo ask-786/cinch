@@ -165,7 +165,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 | D5   | Probing         | Native metadata instantly, FFmpeg probe in background on intent                                         |
 | D6   | Scope           | All video/audio/image operations, plus subtitles (D13)                                                  |
 | D7   | Multi-file      | Multi-input operations yes; sequential queue; **no batch** in v1                                        |
-| D8   | Routing         | Routed per operation for lazy chunks and shareable links; guard redirects on refresh                    |
+| D8   | Routing         | Routed per operation for lazy chunks and shareable links; unknown operation redirects (see D26)         |
 | D9   | Design          | Tailwind 4, quiet native-utility feel, dark mode with manual override                                   |
 | D10  | Testing         | Unit tests on argument builders and option mapping. No e2e                                              |
 | D11  | Framework       | Angular (brief mandates it); revisit at Stage 4 checkpoint if it fights                                 |
@@ -184,6 +184,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 | D23  | Operation model | Declarative descriptors with generated forms; custom component escape hatch for trim, crop, GIF         |
 | D24  | Multi-file UX   | Dropping several files reveals combine operations; reorder by drag                                      |
 | D25  | Delivery        | Staged with a runnable checkpoint after compression works end to end                                    |
+| D26  | Two ways in     | File-first **and** operation-first: an operation URL opens cold and asks for the files it needs         |
 
 ### Settled parameters
 
@@ -193,6 +194,12 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - **Audio**: AAC 128k Good / 192k High / 96k Small. Opus for WebM.
 - **Formats**: video MP4, WebM, MKV, MOV · audio MP3, M4A, Opus, WAV, FLAC, OGG · image PNG, JPG, WebP.
 - **Probe**: `ffprobe -print_format json` written to a file and read back. No stderr scraping.
+- **Two ways in (D26)**: dropping a file first shows what can be done with it; opening an operation
+  first shows what that operation needs and takes the file after. The second is what makes the
+  per-operation URLs of D8 worth having — a link to `/compress` is useless if it bounces anyone who
+  arrives without a selection. One `Selection` serves both, so a file brought in on an operation
+  screen is on the home screen afterwards. `requirementOf` phrases the ask from `accepts` and
+  `inputs`; the three operations wanting a video _and_ something else carry their own `needs` line.
 - **Prewarm**: fetch the 32 MB core into Cache API on idle; instantiate only on intent.
 - **Preflight**: warn above 500 MB desktop input; hard cap mobile at 150 MB.
 

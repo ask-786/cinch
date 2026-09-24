@@ -1,27 +1,14 @@
 import { inject } from '@angular/core';
 import { Router, type CanActivateFn, type Routes } from '@angular/router';
-import { canRun } from '../media/operations/descriptor';
 import { operationByRoute } from '../media/operations/registry';
-import { Selection } from './core/selection';
 
 /**
- * An operation URL needs two things to be meaningful: an operation that exists,
- * and enough files it can be pointed at. A refresh loses the second — the file lives
- * in memory, not on a server — so it goes back to the start (D8).
+ * An operation URL only has to name an operation that exists. It may arrive with
+ * nothing selected — a shared or bookmarked link, which is the point of routing
+ * per operation (D8) — and the screen asks for the files itself (D26).
  */
-const operationIsUsable: CanActivateFn = (route) => {
-  const operation = operationByRoute(route.paramMap.get('operation'));
-  const selection = inject(Selection);
-
-  if (
-    operation &&
-    canRun(
-      operation,
-      selection.files().map((file) => file.kind),
-    )
-  ) {
-    return true;
-  }
+const operationExists: CanActivateFn = (route) => {
+  if (operationByRoute(route.paramMap.get('operation'))) return true;
   return inject(Router).createUrlTree(['/']);
 };
 
@@ -42,7 +29,7 @@ export const routes: Routes = [
     // this segment decides the form, the command and the output.
     path: ':operation',
     loadComponent: () => import('./features/operation/operation').then((m) => m.OperationScreen),
-    canActivate: [operationIsUsable],
+    canActivate: [operationExists],
     title: (route) => {
       const operation = operationByRoute(route.paramMap.get('operation'));
       return operation ? `${operation.title} — Cinch` : 'Cinch';

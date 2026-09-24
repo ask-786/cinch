@@ -138,6 +138,7 @@ export const videoChromakey = defineOperation<VideoChromakeyOptions>({
   accepts: ['video', 'image'],
   inputs: { min: 1, max: 2 },
   requires: ['video'],
+  needs: 'A video file, and an image for the new background if you want one',
   defaults: DEFAULT_CHROMAKEY,
   outputSuffix: 'keyed',
 

@@ -6,6 +6,7 @@ import { groupOperations, operationsFor, OPERATIONS } from '../../../media/opera
 import { DropZone } from '../../components/drop-zone';
 import { JobList } from '../../components/job-list';
 import { MediaInfoPanel } from '../../components/media-info-panel';
+import { RejectedFiles } from '../../components/rejected-files';
 import { Button } from '../../components/ui';
 import { FfmpegClient } from '../../core/ffmpeg-client';
 import { Selection } from '../../core/selection';
@@ -13,7 +14,7 @@ import { Selection } from '../../core/selection';
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, DropZone, JobList, MediaInfoPanel, RouterLink],
+  imports: [Button, DropZone, JobList, MediaInfoPanel, RejectedFiles, RouterLink],
   templateUrl: './home.html',
 })
 export class Home {

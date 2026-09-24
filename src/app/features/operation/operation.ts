@@ -6,30 +6,35 @@ import {
   effect,
   inject,
   input,
-  OnInit,
   signal,
   untracked,
   type Type,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { formatBytes, formatDuration } from '../../../media/humanize';
+import { chooseCore } from '../../../media/ffmpeg/core-routing';
 import {
   applyChange,
   archiveNameFor,
+  canRun,
   hasManyOutputs,
   initialOptions,
   isMultiInput,
   outputNameFor,
   pickInputs,
   previewCommand,
+  requirementOf,
   sequenceName,
   type OptionValue,
   type OptionValues,
 } from '../../../media/operations/descriptor';
 import { operationByRoute } from '../../../media/operations/registry';
+import { DropZone } from '../../components/drop-zone';
 import { JobList } from '../../components/job-list';
 import { OperationForm } from '../../components/operation-form';
+import { RejectedFiles } from '../../components/rejected-files';
 import { Button, Disclosure, Progress } from '../../components/ui';
+import { FfmpegClient } from '../../core/ffmpeg-client';
 import { JobQueue } from '../../core/job-queue';
 import { saveResult } from '../../core/save-result';
 import { Selection } from '../../core/selection';
@@ -44,10 +49,21 @@ import { CUSTOM_FORMS, type CustomFormInputs } from './custom-forms';
   selector: 'app-operation',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './operation.html',
-  imports: [Button, DecimalPipe, Disclosure, JobList, NgComponentOutlet, OperationForm, Progress],
+  imports: [
+    Button,
+    DecimalPipe,
+    Disclosure,
+    DropZone,
+    JobList,
+    NgComponentOutlet,
+    OperationForm,
+    Progress,
+    RejectedFiles,
+  ],
 })
-export class OperationScreen implements OnInit {
+export class OperationScreen {
   private readonly router = inject(Router);
+  private readonly ffmpeg = inject(FfmpegClient);
   protected readonly selection = inject(Selection);
   protected readonly queue = inject(JobQueue);
 
@@ -61,6 +77,36 @@ export class OperationScreen implements OnInit {
     const descriptor = this.descriptor();
     if (!descriptor) return [];
     return this.selection.files().filter((file) => descriptor.accepts.includes(file.kind));
+  });
+
+  /**
+   * Whether the selection is enough to run this. An operation URL can be opened
+   * cold, so "not yet" is an ordinary state of this screen, not an error (D26).
+   */
+  protected readonly ready = computed(() => {
+    const descriptor = this.descriptor();
+    if (!descriptor) return false;
+    return canRun(
+      descriptor,
+      this.selection.files().map((file) => file.kind),
+    );
+  });
+
+  /**
+   * Selected files this operation cannot touch. The file dialog is filtered by
+   * kind, but a drag-and-drop is not, so without this a dropped image on a
+   * video screen would land in the selection and appear to do nothing.
+   */
+  protected readonly setAside = computed(() => {
+    const descriptor = this.descriptor();
+    if (!descriptor) return [];
+    return this.selection.files().filter((file) => !descriptor.accepts.includes(file.kind));
+  });
+
+  /** What to ask for while the screen has nothing to work on. */
+  protected readonly requirement = computed(() => {
+    const descriptor = this.descriptor();
+    return descriptor ? requirementOf(descriptor) : '';
   });
 
   protected readonly chosenId = signal<string | undefined>(undefined);
@@ -228,12 +274,19 @@ export class OperationScreen implements OnInit {
     effect(() => {
       for (const media of this.inputs()) void this.selection.deepProbe(media.id);
     });
-  }
 
-  ngOnInit(): void {
-    if (!this.descriptor() || this.candidates().length === 0) {
-      void this.router.navigate(['/']);
-    }
+    // Landing straight on an operation URL skips the home screen's prewarm, so
+    // start the core download here too, once there is a file to justify it.
+    effect(() => {
+      if (!this.ready()) return;
+      const heights = this.inputs().map((media) => this.selection.info().get(media.id)?.height);
+      this.ffmpeg.prewarm(
+        chooseCore(
+          { estimatedOutputBytes: this.estimate() ?? 1, sourceHeight: heights.find((h) => h) },
+          this.ffmpeg.capabilities,
+        ),
+      );
+    });
   }
 
   protected update(changes: Record<string, OptionValue>): void {

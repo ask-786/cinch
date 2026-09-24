@@ -11,6 +11,7 @@ import {
   outputNameFor,
   pickInputs,
   previewCommand,
+  requirementOf,
   sequenceName,
   timestamp,
   visibleFields,
@@ -253,5 +254,41 @@ describe('timestamp', () => {
 
   it('never goes negative', () => {
     expect(timestamp(-5)).toBe('00:00:00.000');
+  });
+});
+
+describe('requirementOf', () => {
+  const shaped = (extra: Partial<Operation>): Operation =>
+    ({ ...operation, ...extra }) as Operation;
+
+  it('names one file for a single-input operation', () => {
+    expect(requirementOf(shaped({ accepts: ['video'] }))).toBe('A video file');
+    expect(requirementOf(shaped({ accepts: ['audio'] }))).toBe('An audio file');
+    expect(requirementOf(shaped({ accepts: ['image'] }))).toBe('An image file');
+  });
+
+  it('offers the alternatives when an operation takes either kind', () => {
+    expect(requirementOf(shaped({ accepts: ['video', 'audio'] }))).toBe('A video or audio file');
+  });
+
+  it('spells out a fixed count', () => {
+    expect(requirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 2 } }))).toBe(
+      'Two video files',
+    );
+  });
+
+  it('says "or more" when the maximum is higher than the minimum', () => {
+    expect(requirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 20 } }))).toBe(
+      'Two or more video files',
+    );
+    expect(requirementOf(shaped({ accepts: ['image'], inputs: { min: 1, max: 100 } }))).toBe(
+      'One or more image files',
+    );
+  });
+
+  it("prefers the descriptor's own wording, for the combinations a rule cannot phrase", () => {
+    expect(requirementOf(shaped({ needs: 'A video file and an audio file' }))).toBe(
+      'A video file and an audio file',
+    );
   });
 });

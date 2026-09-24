@@ -105,6 +105,7 @@ export const videoWatermark = defineOperation<VideoWatermarkOptions>({
   accepts: ['video', 'image'],
   inputs: { min: 2, max: 2 },
   requires: ['video', 'image'],
+  needs: 'A video file and the picture to put on it',
   defaults: DEFAULT_WATERMARK,
   outputSuffix: 'logo',
 
