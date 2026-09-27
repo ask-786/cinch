@@ -168,6 +168,8 @@ export interface OperationDescriptor<O extends OptionValues> {
    * only where those cannot say it — a video *and* an image, not two of either.
    */
   readonly needs?: string;
+  /** The same thing at chip length, for the picker: "Video + image". */
+  readonly needsBrief?: string;
   /**
    * `'many'` for operations that write a numbered run of files — frames,
    * thumbnails, segments. Their output path carries `SEQUENCE_TOKEN`, and the
@@ -264,11 +266,34 @@ export function requirementOf(operation: Operation): string {
   return `${count}${max === undefined || max > min ? ' or more' : ''} ${phrase} files`;
 }
 
+/**
+ * The requirement at chip length, for a card in the picker — and only when it
+ * says something the group heading does not. One video is the unremarkable
+ * case, so it gets nothing; needing two, or a mixture, is worth a chip.
+ */
+export function briefRequirementOf(operation: Operation): string | undefined {
+  if (operation.needsBrief) return operation.needsBrief;
+
+  const { min, max } = inputCountOf(operation);
+  if (max === 1) return undefined;
+
+  const only = operation.accepts.length === 1 ? operation.accepts[0] : undefined;
+  const noun = only ? KIND_PLURALS[only] : 'files';
+  return `${min}${max === undefined || max > min ? '+' : ''} ${noun}`;
+}
+
 const KIND_NOUNS: Readonly<Record<MediaKind, string>> = {
   video: 'video',
   audio: 'audio',
   image: 'image',
   subtitle: 'subtitle',
+};
+
+const KIND_PLURALS: Readonly<Record<MediaKind, string>> = {
+  video: 'videos',
+  audio: 'audio files',
+  image: 'images',
+  subtitle: 'subtitle files',
 };
 
 const NUMBER_WORDS = [

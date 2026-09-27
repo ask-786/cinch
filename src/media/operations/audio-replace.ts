@@ -128,6 +128,7 @@ export const audioReplace = defineOperation<AudioReplaceOptions>({
   inputs: { min: 2, max: 2 },
   requires: ['video'],
   needs: 'A video file and an audio file',
+  needsBrief: 'Video + audio',
   defaults: DEFAULT_REPLACE,
   outputSuffix: 'new-sound',
 

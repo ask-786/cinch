@@ -19,6 +19,7 @@ import {
   canRun,
   hasManyOutputs,
   initialOptions,
+  inputCountOf,
   isMultiInput,
   outputNameFor,
   pickInputs,
@@ -107,6 +108,17 @@ export class OperationScreen {
   protected readonly requirement = computed(() => {
     const descriptor = this.descriptor();
     return descriptor ? requirementOf(descriptor) : '';
+  });
+
+  /**
+   * How many files short a part-filled selection is, for the operations that
+   * take several. Zero when the count is met but a kind is still missing — the
+   * requirement sentence says what that is, so there is nothing to count.
+   */
+  protected readonly stillNeeded = computed(() => {
+    const descriptor = this.descriptor();
+    if (!descriptor) return 0;
+    return Math.max(0, inputCountOf(descriptor).min - this.candidates().length);
   });
 
   protected readonly chosenId = signal<string | undefined>(undefined);
@@ -376,6 +388,15 @@ export class OperationScreen {
   protected cancel(): void {
     const id = this.jobId();
     if (id) this.queue.cancel(id);
+  }
+
+  /**
+   * Drops the file the operation refused, which returns this screen to asking
+   * for one. Going home would not help — home is the list of jobs now.
+   */
+  protected replaceFile(): void {
+    const media = this.media();
+    if (media) this.selection.remove(media.id);
   }
 
   protected back(): void {

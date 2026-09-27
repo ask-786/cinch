@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyChange,
   archiveNameFor,
+  briefRequirementOf,
   canRun,
   decodeChoice,
   defineOperation,
@@ -290,5 +291,36 @@ describe('requirementOf', () => {
     expect(requirementOf(shaped({ needs: 'A video file and an audio file' }))).toBe(
       'A video file and an audio file',
     );
+  });
+});
+
+describe('briefRequirementOf', () => {
+  const shaped = (extra: Partial<Operation>): Operation =>
+    ({ ...operation, ...extra }) as Operation;
+
+  it('says nothing for the ordinary one-file operation', () => {
+    expect(briefRequirementOf(shaped({ accepts: ['video'] }))).toBeUndefined();
+  });
+
+  it('counts the files when more than one is wanted', () => {
+    expect(briefRequirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 2 } }))).toBe(
+      '2 videos',
+    );
+    expect(briefRequirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 20 } }))).toBe(
+      '2+ videos',
+    );
+    expect(briefRequirementOf(shaped({ accepts: ['image'], inputs: { min: 1, max: 100 } }))).toBe(
+      '1+ images',
+    );
+  });
+
+  it('stays vague about the kind when either will do', () => {
+    expect(
+      briefRequirementOf(shaped({ accepts: ['video', 'audio'], inputs: { min: 2, max: 2 } })),
+    ).toBe('2 files');
+  });
+
+  it("prefers the descriptor's own chip", () => {
+    expect(briefRequirementOf(shaped({ needsBrief: 'Video + image' }))).toBe('Video + image');
   });
 });

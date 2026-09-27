@@ -10,7 +10,7 @@
         type="button"
         (click)="back()"
         class="-ml-2 rounded-lg p-2 text-muted transition-colors hover:bg-raised hover:text-ink"
-        aria-label="Back to files"
+        aria-label="Back to all jobs"
       >
         <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path
@@ -104,16 +104,14 @@
         <section class="mt-8 rounded-card border border-line bg-danger-soft p-6">
           <h2 class="text-base font-semibold">This file will not do</h2>
           <p class="mt-2 text-sm text-muted">{{ reason }}</p>
-          <button
-            appButton
-            variant="secondary"
-            size="md"
-            type="button"
-            class="mt-4"
-            (click)="back()"
-          >
-            Pick another file
-          </button>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button appButton variant="primary" size="md" type="button" (click)="replaceFile()">
+              Choose a different file
+            </button>
+            <button appButton variant="secondary" size="md" type="button" (click)="back()">
+              Pick another job
+            </button>
+          </div>
         </section>
       } @else if (current && (current.status === 'waiting' || current.status === 'running')) {
         <section class="mt-8 rounded-card border border-line bg-surface p-6">
@@ -333,43 +331,64 @@
         </section>
       }
     } @else {
-      <section class="mt-8 space-y-6">
-        <div class="rounded-card border border-line bg-surface p-5">
-          <h2 class="text-sm font-semibold text-ink">What this needs</h2>
-          <p class="mt-1.5 text-sm text-muted">{{ requirement() }}.</p>
+      <section class="mt-8 space-y-4">
+        @if (candidates().length > 0) {
+          <ul class="divide-y divide-line rounded-card border border-line bg-surface">
+            @for (candidate of candidates(); track candidate.id) {
+              <li class="flex items-center gap-3 px-4 py-3">
+                <svg class="size-4 shrink-0 text-good" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="m3.5 8.5 3 3 6-7"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ candidate.name }}</span>
+                <span class="shrink-0 font-mono text-xs text-muted">
+                  {{ formatBytes(candidate.size) }}
+                </span>
+                <button
+                  appButton
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  (click)="selection.remove(candidate.id)"
+                  [attr.aria-label]="'Remove ' + candidate.name"
+                >
+                  Remove
+                </button>
+              </li>
+            }
+          </ul>
 
-          @if (setAside().length > 0) {
-            <p class="mt-3 text-sm text-muted">
-              Not for this job:
-              @for (item of setAside(); track item.id; let last = $last) {
-                <span class="text-ink">{{ item.name }}</span
-                >{{ last ? '.' : ', ' }}
-              }
-              Still on the home screen, where other jobs can use them.
+          @if (stillNeeded() > 0) {
+            <p class="text-sm text-ink">
+              {{ stillNeeded() === 1 ? 'One more file' : stillNeeded() + ' more files' }} and this
+              can run.
             </p>
           }
-
-          @if (candidates().length > 0) {
-            <ul class="mt-4 space-y-1.5 border-t border-line pt-3">
-              @for (candidate of candidates(); track candidate.id) {
-                <li class="flex items-center justify-between gap-3 text-sm">
-                  <span class="min-w-0 truncate text-ink">{{ candidate.name }}</span>
-                  <span class="shrink-0 font-mono text-xs text-muted">
-                    {{ formatBytes(candidate.size) }}
-                  </span>
-                </li>
-              }
-            </ul>
-          }
-        </div>
+        }
 
         <app-drop-zone
           [kinds]="op.accepts"
-          [heading]="candidates().length > 0 ? 'Add another file' : 'Drop a file here'"
-          subheading="It stays in this tab — nothing is uploaded"
+          [heading]="candidates().length > 0 ? 'Add another file' : 'Choose your file'"
+          [subheading]="requirement() + ' — nothing is uploaded'"
           [buttonLabel]="candidates().length > 0 ? 'Add a file' : 'Choose a file'"
           (filesPicked)="selection.add($event)"
         />
+
+        @if (setAside().length > 0) {
+          <p class="text-sm text-muted">
+            Set aside, because this job cannot use
+            {{ setAside().length === 1 ? 'it' : 'them' }}:
+            @for (item of setAside(); track item.id; let last = $last) {
+              <span class="text-ink">{{ item.name }}</span
+              >{{ last ? '.' : ', ' }}
+            }
+          </p>
+        }
 
         <app-rejected-files [files]="selection.rejected()" [dismissable]="false" />
       </section>

@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@a
 import { RouterLink } from '@angular/router';
 import { chooseCore } from '../../../media/ffmpeg/core-routing';
 import type { MediaKind } from '../../../media/models/media-kind';
-import { groupOperations, operationsFor, OPERATIONS } from '../../../media/operations/registry';
+import { operationsFor, OPERATIONS } from '../../../media/operations/registry';
 import { DropZone } from '../../components/drop-zone';
 import { JobList } from '../../components/job-list';
 import { MediaInfoPanel } from '../../components/media-info-panel';
+import { OperationPicker } from '../../components/operation-picker';
 import { RejectedFiles } from '../../components/rejected-files';
 import { Button } from '../../components/ui';
 import { FfmpegClient } from '../../core/ffmpeg-client';
@@ -14,7 +15,7 @@ import { Selection } from '../../core/selection';
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Button, DropZone, JobList, MediaInfoPanel, RejectedFiles, RouterLink],
+  imports: [Button, DropZone, JobList, MediaInfoPanel, OperationPicker, RejectedFiles, RouterLink],
   templateUrl: './home.html',
 })
 export class Home {
@@ -45,10 +46,10 @@ export class Home {
   );
 
   /** What can be done with what is on screen, straight from the registry. */
-  protected readonly available = computed(() => groupOperations(operationsFor(this.kinds())));
+  protected readonly available = computed(() => operationsFor(this.kinds()));
 
-  /** Everything Cinch can do, for the empty state's list. */
-  protected readonly catalogue = groupOperations(OPERATIONS);
+  /** Everything Cinch can do — the landing screen is this list (D26). */
+  protected readonly catalogue = OPERATIONS;
 
   protected readonly comingSoon: readonly string[] = ['Crop', 'Make a GIF', 'Burn in subtitles'];
 }

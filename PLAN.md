@@ -182,9 +182,9 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 | D21  | Advanced mode   | Read-only generated command + copy button emitting a real desktop `ffmpeg` line                         |
 | D22  | Compatibility   | Offer H.265 with a plain warning; never default to it. Default MP4/H.264/AAC plays everywhere           |
 | D23  | Operation model | Declarative descriptors with generated forms; custom component escape hatch for trim, crop, GIF         |
-| D24  | Multi-file UX   | Dropping several files reveals combine operations; reorder by drag                                      |
+| D24  | Multi-file UX   | Combine jobs collect their files on their own screen, one at a time; reorder by drag                    |
 | D25  | Delivery        | Staged with a runnable checkpoint after compression works end to end                                    |
-| D26  | Two ways in     | File-first **and** operation-first: an operation URL opens cold and asks for the files it needs         |
+| D26  | Way in          | **Operation-first.** The landing screen is the job list; the job screen asks for the files it needs     |
 
 ### Settled parameters
 
@@ -194,12 +194,15 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - **Audio**: AAC 128k Good / 192k High / 96k Small. Opus for WebM.
 - **Formats**: video MP4, WebM, MKV, MOV · audio MP3, M4A, Opus, WAV, FLAC, OGG · image PNG, JPG, WebP.
 - **Probe**: `ffprobe -print_format json` written to a file and read back. No stderr scraping.
-- **Two ways in (D26)**: dropping a file first shows what can be done with it; opening an operation
-  first shows what that operation needs and takes the file after. The second is what makes the
-  per-operation URLs of D8 worth having — a link to `/compress` is useless if it bounces anyone who
-  arrives without a selection. One `Selection` serves both, so a file brought in on an operation
-  screen is on the home screen afterwards. `requirementOf` phrases the ask from `accepts` and
-  `inputs`; the three operations wanting a video _and_ something else carry their own `needs` line.
+- **Operation-first (D26)**: the landing screen is the list of jobs, searchable, with no drop zone on
+  it. Choosing a job is what settles which kinds of file are wanted and how many, so the job screen
+  can ask for exactly that — and a link to `/compress` now works for someone arriving with nothing,
+  which is what makes the per-operation URLs of D8 worth having. Files are still collected into the
+  one `Selection`, so a file brought in on a job screen is on the home screen afterwards with every
+  other job it fits; that screen keeps an "add another file" zone, which is how the combine jobs
+  stay discoverable (D24). `requirementOf` phrases the ask ("Two or more video files") and
+  `briefRequirementOf` the card chip ("2+ videos"); the three jobs wanting a video _and_ something
+  else carry their own `needs`/`needsBrief`, since no rule phrases those.
 - **Prewarm**: fetch the 32 MB core into Cache API on idle; instantiate only on intent.
 - **Preflight**: warn above 500 MB desktop input; hard cap mobile at 150 MB.
 
