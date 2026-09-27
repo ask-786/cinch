@@ -165,7 +165,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 | D5   | Probing         | Native metadata instantly, FFmpeg probe in background on intent                                         |
 | D6   | Scope           | All video/audio/image operations, plus subtitles (D13)                                                  |
 | D7   | Multi-file      | Multi-input operations yes; sequential queue; **no batch** in v1                                        |
-| D8   | Routing         | Routed per operation for lazy chunks and shareable links; guard redirects on refresh                    |
+| D8   | Routing         | Routed per operation for lazy chunks and shareable links; unknown operation redirects (see D26)         |
 | D9   | Design          | Tailwind 4, quiet native-utility feel, dark mode with manual override                                   |
 | D10  | Testing         | Unit tests on argument builders and option mapping. No e2e                                              |
 | D11  | Framework       | Angular (brief mandates it); revisit at Stage 4 checkpoint if it fights                                 |
@@ -182,8 +182,9 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 | D21  | Advanced mode   | Read-only generated command + copy button emitting a real desktop `ffmpeg` line                         |
 | D22  | Compatibility   | Offer H.265 with a plain warning; never default to it. Default MP4/H.264/AAC plays everywhere           |
 | D23  | Operation model | Declarative descriptors with generated forms; custom component escape hatch for trim, crop, GIF         |
-| D24  | Multi-file UX   | Dropping several files reveals combine operations; reorder by drag                                      |
+| D24  | Multi-file UX   | Combine jobs collect their files on their own screen, one at a time; reorder by drag                    |
 | D25  | Delivery        | Staged with a runnable checkpoint after compression works end to end                                    |
+| D26  | Way in          | **Operation-first.** The landing screen is the job list; the job screen asks for the files it needs     |
 
 ### Settled parameters
 
@@ -193,6 +194,15 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - **Audio**: AAC 128k Good / 192k High / 96k Small. Opus for WebM.
 - **Formats**: video MP4, WebM, MKV, MOV · audio MP3, M4A, Opus, WAV, FLAC, OGG · image PNG, JPG, WebP.
 - **Probe**: `ffprobe -print_format json` written to a file and read back. No stderr scraping.
+- **Operation-first (D26)**: the landing screen is the list of jobs, searchable, with no drop zone on
+  it. Choosing a job is what settles which kinds of file are wanted and how many, so the job screen
+  can ask for exactly that — and a link to `/compress` now works for someone arriving with nothing,
+  which is what makes the per-operation URLs of D8 worth having. Files are still collected into the
+  one `Selection`, so a file brought in on a job screen is on the home screen afterwards with every
+  other job it fits; that screen keeps an "add another file" zone, which is how the combine jobs
+  stay discoverable (D24). `requirementOf` phrases the ask ("Two or more video files") and
+  `briefRequirementOf` the card chip ("2+ videos"); the three jobs wanting a video _and_ something
+  else carry their own `needs`/`needsBrief`, since no rule phrases those.
 - **Prewarm**: fetch the 32 MB core into Cache API on idle; instantiate only on intent.
 - **Preflight**: warn above 500 MB desktop input; hard cap mobile at 150 MB.
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyChange,
   archiveNameFor,
+  briefRequirementOf,
   canRun,
   decodeChoice,
   defineOperation,
@@ -11,6 +12,7 @@ import {
   outputNameFor,
   pickInputs,
   previewCommand,
+  requirementOf,
   sequenceName,
   timestamp,
   visibleFields,
@@ -253,5 +255,72 @@ describe('timestamp', () => {
 
   it('never goes negative', () => {
     expect(timestamp(-5)).toBe('00:00:00.000');
+  });
+});
+
+describe('requirementOf', () => {
+  const shaped = (extra: Partial<Operation>): Operation =>
+    ({ ...operation, ...extra }) as Operation;
+
+  it('names one file for a single-input operation', () => {
+    expect(requirementOf(shaped({ accepts: ['video'] }))).toBe('A video file');
+    expect(requirementOf(shaped({ accepts: ['audio'] }))).toBe('An audio file');
+    expect(requirementOf(shaped({ accepts: ['image'] }))).toBe('An image file');
+  });
+
+  it('offers the alternatives when an operation takes either kind', () => {
+    expect(requirementOf(shaped({ accepts: ['video', 'audio'] }))).toBe('A video or audio file');
+  });
+
+  it('spells out a fixed count', () => {
+    expect(requirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 2 } }))).toBe(
+      'Two video files',
+    );
+  });
+
+  it('says "or more" when the maximum is higher than the minimum', () => {
+    expect(requirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 20 } }))).toBe(
+      'Two or more video files',
+    );
+    expect(requirementOf(shaped({ accepts: ['image'], inputs: { min: 1, max: 100 } }))).toBe(
+      'One or more image files',
+    );
+  });
+
+  it("prefers the descriptor's own wording, for the combinations a rule cannot phrase", () => {
+    expect(requirementOf(shaped({ needs: 'A video file and an audio file' }))).toBe(
+      'A video file and an audio file',
+    );
+  });
+});
+
+describe('briefRequirementOf', () => {
+  const shaped = (extra: Partial<Operation>): Operation =>
+    ({ ...operation, ...extra }) as Operation;
+
+  it('says nothing for the ordinary one-file operation', () => {
+    expect(briefRequirementOf(shaped({ accepts: ['video'] }))).toBeUndefined();
+  });
+
+  it('counts the files when more than one is wanted', () => {
+    expect(briefRequirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 2 } }))).toBe(
+      '2 videos',
+    );
+    expect(briefRequirementOf(shaped({ accepts: ['video'], inputs: { min: 2, max: 20 } }))).toBe(
+      '2+ videos',
+    );
+    expect(briefRequirementOf(shaped({ accepts: ['image'], inputs: { min: 1, max: 100 } }))).toBe(
+      '1+ images',
+    );
+  });
+
+  it('stays vague about the kind when either will do', () => {
+    expect(
+      briefRequirementOf(shaped({ accepts: ['video', 'audio'], inputs: { min: 2, max: 2 } })),
+    ).toBe('2 files');
+  });
+
+  it("prefers the descriptor's own chip", () => {
+    expect(briefRequirementOf(shaped({ needsBrief: 'Video + image' }))).toBe('Video + image');
   });
 });

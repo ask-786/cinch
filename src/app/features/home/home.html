@@ -1,19 +1,27 @@
 @if (selection.isEmpty()) {
-  <section class="mx-auto max-w-2xl text-center">
+  <section class="text-center">
     <h1 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
       Media tools that never leave your device
     </h1>
     <p class="mx-auto mt-4 max-w-xl text-pretty text-base text-muted">
-      Compress a video, pull the audio out of it, cut a clip, make a GIF. Everything happens inside
-      this browser tab — your file is never uploaded anywhere.
+      Compress a video, pull the audio out of it, cut a clip, join two together. Everything happens
+      inside this browser tab — your file is never uploaded anywhere.
+    </p>
+    <p class="mx-auto mt-4 max-w-xl text-pretty text-sm text-faint">
+      Pick a job below. The next screen asks for the file it needs, and tells you what that is
+      before you go looking.
     </p>
   </section>
-}
 
-<section [class.mt-10]="selection.isEmpty()">
-  @if (selection.isEmpty()) {
-    <app-drop-zone (filesPicked)="selection.add($event)" />
-  } @else {
+  <section class="mt-8">
+    <app-operation-picker [operations]="catalogue" [searchable]="true" />
+
+    <p class="mt-8 border-t border-line pt-4 text-sm text-muted">
+      Still to come: {{ comingSoon.join(', ') }}.
+    </p>
+  </section>
+} @else {
+  <section>
     <div class="flex items-baseline justify-between gap-4">
       <h1 class="text-lg font-semibold tracking-tight">
         {{ selection.count() }} {{ selection.count() === 1 ? 'file' : 'files' }} ready
@@ -36,7 +44,7 @@
       }
     </div>
 
-    <div class="mt-6">
+    <div class="mt-8">
       <app-drop-zone
         [compact]="true"
         heading="Add another file"
@@ -46,104 +54,42 @@
       />
     </div>
 
-    <div class="mt-6 rounded-card border border-line bg-surface p-5">
-      <h2 class="text-sm font-semibold text-ink">What would you like to do?</h2>
+    <div class="mt-8">
+      <h2 class="text-sm font-semibold text-ink">
+        What would you like to do with
+        {{ selection.count() === 1 ? 'it' : 'these' }}?
+      </h2>
+      <app-operation-picker [operations]="available()" />
 
-      @for (group of available(); track group.group) {
-        <div class="mt-4">
-          <p class="text-xs font-medium uppercase tracking-wide text-faint">{{ group.label }}</p>
-          <div class="mt-2 grid gap-2 sm:grid-cols-2">
-            @for (operation of group.operations; track operation.id) {
-              <a
-                [routerLink]="['/', operation.route]"
-                class="rounded-lg border border-line p-3 transition-colors hover:border-line-strong hover:bg-raised"
-              >
-                <span class="block text-sm font-medium text-ink">{{ operation.title }}</span>
-                <span class="mt-0.5 block text-xs text-muted">{{ operation.summary }}</span>
-              </a>
-            }
-          </div>
-        </div>
+      @if (available().length === 0) {
+        <p class="mt-4 rounded-card border border-line bg-surface p-5 text-sm text-muted">
+          Nothing here takes {{ selection.count() === 1 ? 'this file' : 'these files' }} on their
+          own. Clear them, or add what a job is missing — joining wants two videos, adding a logo
+          wants a video and a picture.
+        </p>
+      } @else if (isMultiple()) {
+        <p class="mt-4 text-sm text-muted">
+          The jobs that combine files use all of them, in an order you can change on the next
+          screen; the rest run on the one you pick.
+        </p>
       }
-
-      <p class="mt-4 text-sm text-muted">
-        @if (isMultiple()) {
-          Several files are selected. Joining uses all of them, in an order you can change on the
-          next screen; everything else runs on the one you pick.
-        } @else {
-          Still to come: {{ comingSoon.join(', ') }}.
-        }
-      </p>
     </div>
-  }
 
-  @if (selection.rejected().length > 0) {
-    <div class="mt-4 rounded-card border border-line bg-danger-soft p-4">
-      <div class="flex items-start justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-ink">
-            {{
-              selection.rejected().length === 1 ? 'One file was skipped' : 'Some files were skipped'
-            }}
-          </p>
-          <ul class="mt-2 space-y-1.5 text-sm text-muted">
-            @for (item of selection.rejected(); track item.name) {
-              <li>
-                <span class="font-medium text-ink">{{ item.name }}</span>
-                <span class="px-1 text-faint">—</span>{{ item.reason }}
-              </li>
-            }
-          </ul>
-        </div>
-        <button
-          type="button"
-          (click)="selection.dismissRejections()"
-          aria-label="Dismiss"
-          class="-m-1.5 shrink-0 rounded-md p-1.5 text-faint transition-colors hover:text-ink"
-        >
-          <svg class="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="m4 4 8 8M12 4l-8 8"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
-      </div>
+    <div class="mt-8">
+      <app-rejected-files
+        [files]="selection.rejected()"
+        (dismissed)="selection.dismissRejections()"
+      />
     </div>
-  }
-</section>
+  </section>
+}
 
-<div class="mt-6">
+<div class="mt-8">
   <app-job-list heading="Jobs" />
 </div>
 
 @if (selection.isEmpty()) {
-  <section
-    class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
-  >
-    @for (group of catalogue; track group.group) {
-      <div class="bg-surface p-5">
-        <h2 class="text-sm font-semibold text-ink">{{ group.label }}</h2>
-        <ul class="mt-2.5 space-y-1.5 text-sm text-muted">
-          @for (operation of group.operations; track operation.id) {
-            <li>{{ operation.title }}</li>
-          }
-        </ul>
-      </div>
-    }
-    <div class="bg-surface p-5">
-      <h2 class="text-sm font-semibold text-ink">Next</h2>
-      <ul class="mt-2.5 space-y-1.5 text-sm text-faint">
-        @for (item of comingSoon; track item) {
-          <li>{{ item }}</li>
-        }
-      </ul>
-    </div>
-  </section>
-
-  <section class="mt-12 grid gap-6 sm:grid-cols-3">
+  <section class="mt-8 grid gap-6 sm:grid-cols-3">
     <div>
       <h3 class="text-sm font-semibold text-ink">No upload</h3>
       <p class="mt-1.5 text-sm text-muted">

@@ -2,13 +2,14 @@ import {
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   input,
   output,
   signal,
   viewChild,
 } from '@angular/core';
-import { ACCEPT_ATTRIBUTE } from '../../media/models/media-kind';
+import { acceptAttributeFor, type MediaKind } from '../../media/models/media-kind';
 import { Button } from './ui';
 
 /**
@@ -74,7 +75,7 @@ import { Button } from './ui';
         type="file"
         multiple
         class="sr-only"
-        [accept]="accept"
+        [accept]="accept()"
         (change)="onInputChange($event)"
       />
     </div>
@@ -85,10 +86,12 @@ export class DropZone {
   readonly subheading = input('Video, audio, images or subtitles — nothing is uploaded');
   readonly buttonLabel = input('Choose a file');
   readonly compact = input(false, { transform: booleanAttribute });
+  /** Narrows the file dialog to one operation's kinds; empty means everything. */
+  readonly kinds = input<readonly MediaKind[]>([]);
 
   readonly filesPicked = output<readonly File[]>();
 
-  protected readonly accept = ACCEPT_ATTRIBUTE;
+  protected readonly accept = computed(() => acceptAttributeFor(this.kinds()));
   protected readonly active = signal(false);
 
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');

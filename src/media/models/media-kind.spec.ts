@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classify, extensionOf } from './media-kind';
+import { ACCEPT_ATTRIBUTE, acceptAttributeFor, classify, extensionOf } from './media-kind';
 
 describe('classify', () => {
   it('trusts the extension over the MIME type', () => {
@@ -31,5 +31,26 @@ describe('extensionOf', () => {
   it('ignores dotfiles and bare names', () => {
     expect(extensionOf('.gitignore')).toBe('');
     expect(extensionOf('README')).toBe('');
+  });
+});
+
+describe('acceptAttributeFor', () => {
+  it('advertises only the extensions of the kinds asked for', () => {
+    const video = acceptAttributeFor(['video']);
+    expect(video).toContain('.mp4');
+    expect(video).toContain('.mkv');
+    expect(video).not.toContain('.mp3');
+    expect(video).not.toContain('.png');
+  });
+
+  it('combines kinds, so a watermark can offer videos and images together', () => {
+    const both = acceptAttributeFor(['video', 'image']);
+    expect(both).toContain('.mov');
+    expect(both).toContain('.png');
+    expect(both).not.toContain('.wav');
+  });
+
+  it('falls back to everything when no kind is named', () => {
+    expect(acceptAttributeFor([])).toBe(ACCEPT_ATTRIBUTE);
   });
 });

@@ -163,6 +163,14 @@ export interface OperationDescriptor<O extends OptionValues> {
    */
   readonly requires?: readonly MediaKind[];
   /**
+   * What to ask for when the operation is opened with nothing to work on.
+   * `requirementOf` phrases this from `accepts` and `inputs` on its own; set it
+   * only where those cannot say it — a video *and* an image, not two of either.
+   */
+  readonly needs?: string;
+  /** The same thing at chip length, for the picker: "Video + image". */
+  readonly needsBrief?: string;
+  /**
    * `'many'` for operations that write a numbered run of files — frames,
    * thumbnails, segments. Their output path carries `SEQUENCE_TOKEN`, and the
    * result is saved as a folder or a zip.
@@ -239,6 +247,79 @@ export function canRun(operation: Operation, kinds: readonly MediaKind[]): boole
   const matching = kinds.filter((kind) => operation.accepts.includes(kind)).length;
   const required = operation.requires ?? [];
   return matching >= inputCountOf(operation).min && required.every((kind) => kinds.includes(kind));
+}
+
+/**
+ * What the operation needs, for the screen that has to ask for it: "A video
+ * file", "Two or more audio files". Phrased from the descriptor so a new
+ * operation gets a sentence without writing one.
+ */
+export function requirementOf(operation: Operation): string {
+  if (operation.needs) return operation.needs;
+
+  const { min, max } = inputCountOf(operation);
+  const nouns = operation.accepts.map((kind) => KIND_NOUNS[kind]);
+  const phrase = nouns.join(' or ');
+
+  if (max === 1) return `${article(phrase)} ${phrase} file`;
+  const count = capitalize(numberWord(min));
+  return `${count}${max === undefined || max > min ? ' or more' : ''} ${phrase} files`;
+}
+
+/**
+ * The requirement at chip length, for a card in the picker — and only when it
+ * says something the group heading does not. One video is the unremarkable
+ * case, so it gets nothing; needing two, or a mixture, is worth a chip.
+ */
+export function briefRequirementOf(operation: Operation): string | undefined {
+  if (operation.needsBrief) return operation.needsBrief;
+
+  const { min, max } = inputCountOf(operation);
+  if (max === 1) return undefined;
+
+  const only = operation.accepts.length === 1 ? operation.accepts[0] : undefined;
+  const noun = only ? KIND_PLURALS[only] : 'files';
+  return `${min}${max === undefined || max > min ? '+' : ''} ${noun}`;
+}
+
+const KIND_NOUNS: Readonly<Record<MediaKind, string>> = {
+  video: 'video',
+  audio: 'audio',
+  image: 'image',
+  subtitle: 'subtitle',
+};
+
+const KIND_PLURALS: Readonly<Record<MediaKind, string>> = {
+  video: 'videos',
+  audio: 'audio files',
+  image: 'images',
+  subtitle: 'subtitle files',
+};
+
+const NUMBER_WORDS = [
+  'no',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+];
+
+function numberWord(count: number): string {
+  return NUMBER_WORDS[count] ?? String(count);
+}
+
+function article(phrase: string): string {
+  return /^[aeiou]/i.test(phrase) ? 'An' : 'A';
+}
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 export function choicesOf(
