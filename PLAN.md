@@ -312,10 +312,24 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 **Audio**
 
-- [x] Convert format (the extract descriptor serves audio inputs too) · [ ] Trim · [ ] Change bitrate · [ ] Change sample rate
-- [ ] Change volume · [ ] Fade in/out · [x] Merge audio
-- [ ] Normalise loudness (`loudnorm`) · [ ] Trim silence · [ ] Waveform / spectrogram image
+- [x] Convert format (the extract descriptor serves audio inputs too) · [x] Trim · [x] Change bitrate · [x] Change sample rate
+- [x] Change volume · [x] Fade in/out · [x] Merge audio
+- [x] Normalise loudness (`loudnorm`) · [x] Trim silence · [x] Waveform image · ~~Spectrogram~~ (too slow, below)
 - [x] Remove the sound from a video · [x] Replace a video's audio track
+- Volume, fades and loudness take a video too: the picture is copied, only the sound re-encoded
+  (`sound-output.ts`). An audio file comes back in its own format at its own bitrate, rounded
+  up to a standard step and never below 128k. Audio trim shares trim's form and always copies.
+- Measured on the core's 5.1: **libopus crashes on stereo** ("memory access out of bounds") at
+  `-compression_level` 5 and above, and the default is 10. Mono is fine at any level, which is how
+  the mono test clips hid it — WebM from Compress and Convert, green screen, replace-audio, and
+  Opus from extract and merge all crashed on ordinary stereo sound. Every Opus encode pins 4 (`opus.ts`).
+- Measured: `showspectrumpic` took 98 s for 9 s of audio at 1200×400 and 71 s for a minute at
+  300×100 (desktop: under a second). Downsampling to 16 kHz mono only halved it. Left out.
+- Measured: libopus refuses any `-ar` but 48 kHz; LAME refuses above 48 kHz and silently caps at
+  160 kbps below 32 kHz. `loudnorm` leaves its output at 192 kHz unless `-ar` puts the rate back.
+- Measured: a boost through `alimiter=limit=0.891:level=disabled` clipped no samples at +20 dB
+  (26,000 without it) and kept the length. Trim silence reaches the end with `areverse`, so a
+  recording over ~500 MB of float samples is steered to "every pause", which needs no reverse.
 
 **Images**
 

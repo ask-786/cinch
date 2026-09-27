@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MediaInfo } from '../models/media-info';
 import {
+  audioCodecArgs,
   audioExtract,
   buildAudioExtractArgs,
   canCopyTrack,
@@ -100,5 +101,13 @@ describe('the extract descriptor', () => {
         info: { ...aacInfo, durationSeconds: 3600 },
       }) ?? [];
     expect(warnings.join(' ')).toMatch(/FLAC/);
+  });
+});
+
+describe('audioCodecArgs', () => {
+  it('holds Opus below the complexity that crashes the core on stereo', () => {
+    const args = audioCodecArgs('opus');
+    expect(args[args.indexOf('-compression_level') + 1]).toBe('4');
+    expect(audioCodecArgs('mp3')).toEqual(['-c:a', 'libmp3lame']);
   });
 });

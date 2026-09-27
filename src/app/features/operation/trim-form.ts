@@ -17,7 +17,8 @@ import type {
 import { Button, Slider } from '../../components/ui';
 
 /**
- * Trim's own form — the first user of the custom-form hatch (D23).
+ * Trim's own form — the first user of the custom-form hatch (D23), shared by
+ * video and audio trim.
  *
  * The generated form could render two number boxes, but picking a cut means
  * watching the frame you are cutting on: the preview seeks to whichever handle
@@ -30,14 +31,18 @@ import { Button, Slider } from '../../components/ui';
   template: `
     <div class="space-y-5">
       @if (sourceUrl(); as url) {
-        <video
-          #preview
-          [src]="url"
-          class="max-h-80 w-full rounded-lg bg-black"
-          controls
-          preload="metadata"
-          playsinline
-        ></video>
+        @if (isAudio()) {
+          <audio #preview [src]="url" class="w-full" controls preload="metadata"></audio>
+        } @else {
+          <video
+            #preview
+            [src]="url"
+            class="max-h-80 w-full rounded-lg bg-black"
+            controls
+            preload="metadata"
+            playsinline
+          ></video>
+        }
       } @else {
         <div class="grid h-40 place-items-center rounded-lg bg-raised text-sm text-muted">
           No preview available
@@ -97,15 +102,17 @@ import { Button, Slider } from '../../components/ui';
         <span class="font-mono">{{ clock(duration()) }}</span>
       </p>
 
-      <label class="flex cursor-pointer items-center gap-2.5">
-        <input
-          type="checkbox"
-          [checked]="exact()"
-          (change)="onChange()({ exact: !exact() })"
-          class="size-4 rounded border-line-strong accent-accent"
-        />
-        <span class="text-sm text-ink">Cut exactly — slower, re-encodes the picture</span>
-      </label>
+      @if (offersExact()) {
+        <label class="flex cursor-pointer items-center gap-2.5">
+          <input
+            type="checkbox"
+            [checked]="exact()"
+            (change)="onChange()({ exact: !exact() })"
+            class="size-4 rounded border-line-strong accent-accent"
+          />
+          <span class="text-sm text-ink">Cut exactly — slower, re-encodes the picture</span>
+        </label>
+      }
     </div>
   `,
 })
@@ -115,7 +122,7 @@ export class TrimForm {
   readonly context = input.required<OperationContext>();
   readonly onChange = input.required<(changes: Record<string, OptionValue>) => void>();
 
-  private readonly preview = viewChild<ElementRef<HTMLVideoElement>>('preview');
+  private readonly preview = viewChild<ElementRef<HTMLMediaElement>>('preview');
 
   /** An object URL over the user's own File — nothing leaves the tab. */
   protected readonly sourceUrl = signal<string | undefined>(undefined);
@@ -123,6 +130,9 @@ export class TrimForm {
   protected readonly start = computed(() => numberOf(this.options()['startSeconds']));
   protected readonly end = computed(() => numberOf(this.options()['endSeconds']));
   protected readonly exact = computed(() => this.options()['exact'] === true);
+  /** Sound can be copied to within a few hundredths of a second, so it has no such switch. */
+  protected readonly offersExact = computed(() => 'exact' in this.operation().defaults);
+  protected readonly isAudio = computed(() => this.context().media?.kind === 'audio');
   protected readonly duration = computed(
     () => this.context().info?.durationSeconds ?? Math.max(this.end(), 1),
   );
@@ -170,10 +180,10 @@ export class TrimForm {
   }
 
   private seek(seconds: number): void {
-    const video = this.preview()?.nativeElement;
-    if (!video) return;
-    video.pause();
-    video.currentTime = seconds;
+    const player = this.preview()?.nativeElement;
+    if (!player) return;
+    player.pause();
+    player.currentTime = seconds;
   }
 }
 

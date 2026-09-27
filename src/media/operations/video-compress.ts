@@ -1,5 +1,6 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation, type Choice } from './descriptor';
+import { opusArgs } from './opus';
 import { vp8CeilingKbps, VP8_CRF_RANGE, type FrameShape } from './vp8-output';
 
 export type VideoFormat = 'mp4' | 'webm' | 'mkv' | 'mov';
@@ -171,8 +172,7 @@ function audioArgs(options: VideoCompressionOptions): string[] {
 
   const kbps = AUDIO_BITRATE_KBPS[options.audio];
   // Opus for WebM, AAC everywhere else.
-  const codec = options.format === 'webm' ? 'libopus' : 'aac';
-  return ['-c:a', codec, '-b:a', `${kbps}k`];
+  return options.format === 'webm' ? opusArgs(kbps) : ['-c:a', 'aac', '-b:a', `${kbps}k`];
 }
 
 function preset(options: VideoCompressionOptions): string {

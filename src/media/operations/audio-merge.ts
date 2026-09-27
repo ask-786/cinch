@@ -1,6 +1,6 @@
 import {
   AUDIO_BITRATE_KBPS,
-  AUDIO_ENCODERS,
+  audioCodecArgs,
   AUDIO_MIME,
   audioBytesPerSecond,
   isLossless,
@@ -63,8 +63,7 @@ export function buildAudioMergeArgs(
     mergeFilter(options, paths.inputPaths.length),
     '-map',
     '[a]',
-    '-c:a',
-    AUDIO_ENCODERS[options.format],
+    ...audioCodecArgs(options.format),
   );
   if (!isLossless(options.format)) {
     args.push('-b:a', `${AUDIO_BITRATE_KBPS[options.quality]}k`);

@@ -1,6 +1,7 @@
 import type { MediaKind } from '../models/media-kind';
 import { defineOperation, type OperationContext, type OperationInput } from './descriptor';
 import { h264OutputArgs, sameSizeEstimate } from './h264-output';
+import { opusArgs } from './opus';
 import { qualityToCrf } from './video-compress';
 import { vp8CeilingKbps, vp8Crf, vp8QualityArgs } from './vp8-output';
 
@@ -99,10 +100,7 @@ export function buildVideoChromakeyArgs(
       'yuva420p',
       '-auto-alt-ref',
       '0',
-      '-c:a',
-      'libopus',
-      '-b:a',
-      `${OPUS_KBPS}k`,
+      ...opusArgs(OPUS_KBPS),
       paths.outputPath,
     );
     return args;

@@ -1,6 +1,7 @@
 import type { MediaInfo } from '../models/media-info';
 import type { MediaKind } from '../models/media-kind';
 import { defineOperation, type OperationContext, type OperationInput } from './descriptor';
+import { opusArgs } from './opus';
 import { CONTAINER_MIME, copyContainer } from './video-convert';
 
 /**
@@ -87,9 +88,7 @@ export function buildAudioReplaceArgs(
     '-c:v',
     'copy',
     // WebM only takes Opus or Vorbis; everything else gets AAC, which plays anywhere.
-    ...(container === 'webm'
-      ? ['-c:a', 'libopus', '-b:a', '160k']
-      : ['-c:a', 'aac', '-b:a', '192k']),
+    ...(container === 'webm' ? opusArgs(160) : ['-c:a', 'aac', '-b:a', '192k']),
     '-shortest',
   );
   if (container === 'mp4') args.push('-movflags', '+faststart');
