@@ -1,5 +1,6 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation, type Choice } from './descriptor';
+import { opusArgs } from './opus';
 import { VP8_CRF_RANGE, vp8QualityArgs } from './vp8-output';
 
 /**
@@ -152,7 +153,7 @@ export function buildVideoConvertArgs(
       args.push('-c:a', 'aac', '-b:a', '160k');
       break;
     case 'opus':
-      args.push('-c:a', 'libopus', '-b:a', '128k');
+      args.push(...opusArgs(128));
       break;
     case 'none':
       args.push('-an');

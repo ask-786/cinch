@@ -1,4 +1,5 @@
 import { defineOperation } from './descriptor';
+import { OPUS_COMPLEXITY } from './opus';
 
 /**
  * Pull the sound out of a video, or re-encode an audio file. One descriptor
@@ -55,6 +56,13 @@ const COPYABLE: Readonly<Record<AudioFormat, readonly string[]>> = {
   flac: ['flac'],
 };
 
+/** `-c:a` for a format, plus whatever that encoder needs to survive the core. */
+export function audioCodecArgs(format: AudioFormat): string[] {
+  const args = ['-c:a', AUDIO_ENCODERS[format]];
+  if (format === 'opus') args.push(...OPUS_COMPLEXITY);
+  return args;
+}
+
 export function canCopyTrack(format: AudioFormat, sourceCodec: string | undefined): boolean {
   if (!sourceCodec) return false;
   return COPYABLE[format].includes(sourceCodec);
@@ -73,7 +81,7 @@ export function buildAudioExtractArgs(
   if (options.bitrate === 'copy') {
     args.push('-c:a', 'copy');
   } else {
-    args.push('-c:a', AUDIO_ENCODERS[options.format]);
+    args.push(...audioCodecArgs(options.format));
     if (!isLossless(options.format)) {
       args.push('-b:a', `${AUDIO_BITRATE_KBPS[options.bitrate]}k`);
     }
