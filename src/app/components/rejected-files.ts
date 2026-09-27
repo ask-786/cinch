@@ -12,7 +12,7 @@ import type { RejectedFile } from '../../media/models/media-file';
   // `space-y` or margin does not leave a gap where the empty host sits.
   host: { '[style.display]': "files().length > 0 ? 'block' : 'none'" },
   template: `
-    <div class="rounded-card border border-line bg-danger-soft p-4">
+    <div class="rounded-card border border-line bg-danger-soft p-5">
       <div class="flex items-start justify-between gap-4">
         <div class="min-w-0">
           <p class="text-sm font-medium text-ink">{{ heading() }}</p>

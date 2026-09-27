@@ -1,5 +1,5 @@
 @if (selection.isEmpty()) {
-  <section class="mx-auto max-w-2xl text-center">
+  <section class="text-center">
     <h1 class="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
       Media tools that never leave your device
     </h1>
@@ -7,13 +7,13 @@
       Compress a video, pull the audio out of it, cut a clip, join two together. Everything happens
       inside this browser tab — your file is never uploaded anywhere.
     </p>
-    <p class="mx-auto mt-4 max-w-md text-pretty text-sm text-faint">
+    <p class="mx-auto mt-4 max-w-xl text-pretty text-sm text-faint">
       Pick a job below. The next screen asks for the file it needs, and tells you what that is
       before you go looking.
     </p>
   </section>
 
-  <section class="mt-10">
+  <section class="mt-8">
     <app-operation-picker [operations]="catalogue" [searchable]="true" />
 
     <p class="mt-8 border-t border-line pt-4 text-sm text-muted">
@@ -44,7 +44,7 @@
       }
     </div>
 
-    <div class="mt-6">
+    <div class="mt-8">
       <app-drop-zone
         [compact]="true"
         heading="Add another file"
@@ -68,14 +68,14 @@
           wants a video and a picture.
         </p>
       } @else if (isMultiple()) {
-        <p class="mt-6 text-sm text-muted">
+        <p class="mt-4 text-sm text-muted">
           The jobs that combine files use all of them, in an order you can change on the next
           screen; the rest run on the one you pick.
         </p>
       }
     </div>
 
-    <div class="mt-4">
+    <div class="mt-8">
       <app-rejected-files
         [files]="selection.rejected()"
         (dismissed)="selection.dismissRejections()"
@@ -84,12 +84,12 @@
   </section>
 }
 
-<div class="mt-6">
+<div class="mt-8">
   <app-job-list heading="Jobs" />
 </div>
 
 @if (selection.isEmpty()) {
-  <section class="mt-12 grid gap-6 sm:grid-cols-3">
+  <section class="mt-8 grid gap-6 sm:grid-cols-3">
     <div>
       <h3 class="text-sm font-semibold text-ink">No upload</h3>
       <p class="mt-1.5 text-sm text-muted">

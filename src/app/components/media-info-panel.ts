@@ -16,7 +16,7 @@ import { Disclosure } from './ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Disclosure],
   template: `
-    <div class="rounded-card border border-line bg-surface p-4">
+    <div class="rounded-card border border-line bg-surface p-5">
       <div class="flex items-start gap-3">
         <div
           class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-raised text-muted"

@@ -41,7 +41,7 @@ import { GROUP_LABELS, groupOperations } from '../../media/operations/registry';
     }
 
     @for (group of groups(); track group.group) {
-      <section [class.mt-8]="!$first" [class.mt-6]="$first">
+      <section class="mt-6">
         <h2 class="text-xs font-medium uppercase tracking-wide text-faint">{{ group.label }}</h2>
         <div class="mt-3 grid gap-2 sm:grid-cols-2">
           @for (operation of group.operations; track operation.id) {
