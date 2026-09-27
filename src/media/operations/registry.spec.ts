@@ -73,7 +73,13 @@ describe('operationsFor', () => {
   });
 
   it('offers only what an audio file can do', () => {
-    expect(operationsFor(['audio']).map((operation) => operation.id)).toEqual(['audio-extract']);
+    const offered = operationsFor(['audio']);
+    for (const operation of offered) expect(operation.accepts).toContain('audio');
+    const ids = offered.map((operation) => operation.id);
+    expect(ids).toContain('audio-trim');
+    expect(ids).not.toContain('video-trim');
+    // Merging needs a second file.
+    expect(ids).not.toContain('audio-merge');
   });
 
   it('offers joining only once there are two videos to join', () => {

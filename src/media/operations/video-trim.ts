@@ -26,6 +26,21 @@ export function trimDuration(options: VideoTrimOptions): number {
   return Math.max(0, options.endSeconds - options.startSeconds);
 }
 
+/**
+ * Keeps both handles inside the file and in order. An end of 0 means "not set
+ * yet", which becomes the end of the file once its length is known.
+ */
+export function clampTrim<O extends { startSeconds: number; endSeconds: number }>(
+  options: O,
+  duration: number | undefined,
+): O {
+  const end = options.endSeconds > 0 ? options.endSeconds : (duration ?? 0);
+  const limit = duration ?? Math.max(end, options.startSeconds);
+  const clampedEnd = Math.min(Math.max(end, 0), limit);
+  const clampedStart = Math.min(Math.max(options.startSeconds, 0), Math.max(clampedEnd - 0.1, 0));
+  return { ...options, startSeconds: clampedStart, endSeconds: clampedEnd };
+}
+
 export function buildVideoTrimArgs(
   options: VideoTrimOptions,
   paths: { inputPath: string; outputPath: string },
@@ -82,14 +97,7 @@ export const videoTrim = defineOperation<VideoTrimOptions>({
   // No generated fields: the custom form owns the whole thing.
   fields: [],
 
-  normalize: (options, context) => {
-    const duration = context.info?.durationSeconds;
-    const end = options.endSeconds > 0 ? options.endSeconds : (duration ?? 0);
-    const limit = duration ?? Math.max(end, options.startSeconds);
-    const clampedEnd = Math.min(Math.max(end, 0), limit);
-    const clampedStart = Math.min(Math.max(options.startSeconds, 0), Math.max(clampedEnd - 0.1, 0));
-    return { ...options, startSeconds: clampedStart, endSeconds: clampedEnd };
-  },
+  normalize: (options, context) => clampTrim(options, context.info?.durationSeconds),
 
   preflight: (options, context) => {
     const warnings: string[] = [];

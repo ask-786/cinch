@@ -1,8 +1,15 @@
 import type { MediaKind } from '../models/media-kind';
 import { audioExtract } from './audio-extract';
+import { audioFade } from './audio-fade';
+import { audioLoudness } from './audio-loudness';
 import { audioMerge } from './audio-merge';
 import { audioRemove } from './audio-remove';
 import { audioReplace } from './audio-replace';
+import { audioResample } from './audio-resample';
+import { audioSilence } from './audio-silence';
+import { audioTrim } from './audio-trim';
+import { audioVolume } from './audio-volume';
+import { audioWaveform } from './audio-waveform';
 import { imagesVideo } from './images-video';
 import { canRun, type Operation, type OperationGroup } from './descriptor';
 import { videoAdjust } from './video-adjust';
@@ -50,9 +57,16 @@ export const OPERATIONS: readonly Operation[] = [
   videoWatermark,
   videoChromakey,
   audioExtract,
+  audioTrim,
+  audioVolume,
+  audioLoudness,
+  audioFade,
+  audioSilence,
+  audioResample,
   audioMerge,
   audioReplace,
   audioRemove,
+  audioWaveform,
   videoFrames,
   videoThumbnails,
   videoScenes,
