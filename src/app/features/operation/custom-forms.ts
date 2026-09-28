@@ -26,4 +26,5 @@ export type CustomFormInputs = {
 
 export const CUSTOM_FORMS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   trim: () => import('./trim-form').then((m) => m.TrimForm),
+  crop: () => import('./crop-form').then((m) => m.CropForm),
 };

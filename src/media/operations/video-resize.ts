@@ -1,6 +1,6 @@
 import type { MediaInfo } from '../models/media-info';
 import { defineOperation } from './descriptor';
-import { h264OutputArgs } from './h264-output';
+import { h264Estimate, h264OutputArgs } from './h264-output';
 import { qualityToCrf } from './video-compress';
 
 /**
@@ -214,17 +214,8 @@ export const videoResize = defineOperation<VideoResizeOptions>({
   outputMime: () => 'video/mp4',
 
   estimateBytes: (options, context) => {
-    const duration = context.info?.durationSeconds;
     const target = resizedDimensions(options, context.info);
-    if (duration === undefined || !target) return undefined;
-
-    // Bits per pixel per frame at CRF 23, fitted against the compress numbers.
-    const crf = qualityToCrf(options.quality, 'h264');
-    const bitsPerPixel = 0.09 * Math.pow(2, (23 - crf) / 6);
-    const frameRate = context.info?.frameRate ?? 30;
-    const videoBps = target.width * target.height * frameRate * bitsPerPixel;
-
-    return Math.round(((videoBps + 128_000) / 8) * duration);
+    return target ? h264Estimate(target, options.quality, context.info) : undefined;
   },
 });
 
