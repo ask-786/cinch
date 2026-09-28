@@ -1,4 +1,4 @@
-import type { MediaInfo } from '../models/media-info';
+import type { MediaInfo, SubtitleTrack } from '../models/media-info';
 import type { MediaKind } from '../models/media-kind';
 
 /**
@@ -31,6 +31,7 @@ interface RawStream {
   readonly duration?: string;
   readonly sample_rate?: string;
   readonly channels?: number;
+  readonly tags?: { readonly language?: string; readonly title?: string };
 }
 
 interface RawProbe {
@@ -80,6 +81,22 @@ export function parseFfprobe(json: string, kind: MediaKind): MediaInfo | undefin
     container: raw.format?.format_name,
     sampleRate: numberOrUndefined(audio?.sample_rate),
     channels: audio?.channels,
+    subtitles: streams.filter((s) => s.codec_type === 'subtitle').map(subtitleTrack),
+  };
+}
+
+/** The subtitle codecs that are pictures rather than text. */
+const PICTURE_SUBTITLES = new Set(['dvd_subtitle', 'hdmv_pgs_subtitle', 'dvb_subtitle', 'xsub']);
+
+function subtitleTrack(stream: RawStream): SubtitleTrack {
+  const codec = stream.codec_name ?? 'unknown';
+  const language = stream.tags?.language;
+  return {
+    codec,
+    // `und` is what a muxer writes when nobody said.
+    language: language && language !== 'und' ? language : undefined,
+    title: stream.tags?.title || undefined,
+    text: !PICTURE_SUBTITLES.has(codec),
   };
 }
 

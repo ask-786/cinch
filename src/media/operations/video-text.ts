@@ -1,5 +1,6 @@
 import { fontPath } from '../ffmpeg/font-assets';
 import { defineOperation } from './descriptor';
+import { escapeFilterValue } from './filter-escape';
 import { h264OutputArgs, sameSizeEstimate } from './h264-output';
 import { qualityToCrf } from './video-compress';
 
@@ -51,17 +52,6 @@ const FALLBACK_HEIGHT = 720;
 
 /** The gap from the edge, as a share of the height, so the text never touches it. */
 const MARGIN = 'h*0.05';
-
-/**
- * A value inside a filtergraph is unescaped twice: once as a filter option
- * (`\`, `'` and `:` are special) and once as part of the graph (`\`, `'`,
- * `[`, `]`, `,` and `;`). Escaping for both, in that order, lets anything
- * through as itself — measured on the core with all of them in one caption.
- */
-export function escapeFilterValue(value: string): string {
-  const option = value.replace(/[\\':]/g, '\\$&');
-  return option.replace(/[\\'[\],;]/g, '\\$&');
-}
 
 /** `drawtext` places the text's top-left corner; w and h are the frame's, tw and th the text's. */
 export function textPlacement(position: TextPosition): { x: string; y: string } {

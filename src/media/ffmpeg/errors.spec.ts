@@ -34,6 +34,18 @@ describe('explainFailure', () => {
     expect(result.kind).toBe('no-stream');
   });
 
+  it('asks for the encoding of a subtitle file that is not UTF-8', () => {
+    const result = explainFailure({
+      logs: [
+        '[srt @ 0xdeefb0] Invalid UTF-8 in decoded subtitles text; maybe missing -sub_charenc option',
+        'Error while decoding stream #0:0: Invalid data found when processing input',
+        'Output file is empty, nothing was encoded (check -ss / -t / -frames parameters if used)',
+      ],
+    });
+    expect(result.kind).toBe('subtitle-encoding');
+    expect(result.hint).toMatch(/Text encoding/);
+  });
+
   it('explains a file FFmpeg could not parse', () => {
     expect(explainFailure({ logs: ['moov atom not found'] }).kind).toBe('invalid-input');
   });

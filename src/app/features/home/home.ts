@@ -51,5 +51,5 @@ export class Home {
   /** Everything Cinch can do — the landing screen is this list (D26). */
   protected readonly catalogue = OPERATIONS;
 
-  protected readonly comingSoon: readonly string[] = ['Crop', 'Make a GIF', 'Burn in subtitles'];
+  protected readonly comingSoon: readonly string[] = ['Crop', 'Make a GIF'];
 }

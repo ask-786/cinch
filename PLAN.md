@@ -346,7 +346,20 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 **Subtitles**
 
-- [ ] Extract · [ ] Convert format · [ ] Burn in (ships a `.ttf`)
+- [x] Extract · [x] Convert format (with a timing shift and text encoding) · [x] Burn in (a file, or the video's own track)
+- ffprobe now lists subtitle tracks (`MediaInfo.subtitles`); DVD and Blu-ray tracks are pictures
+  and are shown but not choosable.
+- Measured: the core's libass has **no font provider**. It loads everything in `fontsdir` as
+  memory fonts but cannot fall back from the font a file names (Arial, for SRT) to one it has, so
+  nothing is drawn. Every burn forces `FontName=DejaVu Sans`; ASS keeps the rest of its styling.
+- Measured: `force_style` takes the **legacy SSA alignment** on this core: `Alignment=8` came out
+  middle-left. 2 is bottom centre, 6 top centre. A `BorderStyle=3` box is filled with `OutlineColour`.
+- Measured: a non-UTF-8 file stops with "Invalid UTF-8 in decoded subtitles text" (exit 69).
+  `-sub_charenc` / `charenc=` fixed CP1250–1256, GB18030, BIG5, Shift_JIS, EUC-KR, ISO-8859-15 and
+  KOI8-R. DejaVu has no CJK glyphs, so burning those warns.
+- Measured: `-itsoffset` below zero is undone (FFmpeg moves the first line back to 0:00; −1 s and
+  −2.5 s gave the same file). `-copyts -itsoffset S -i … -ss 0` keeps the times and drops lines
+  that would start before zero; without `-ss 0` they are written as `00:00:00,-500`.
 
 ### Stage 7 — Polish
 

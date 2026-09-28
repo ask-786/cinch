@@ -108,8 +108,13 @@ describe('operationsFor', () => {
     );
   });
 
-  it('offers nothing for a kind no operation accepts yet', () => {
-    expect(operationsFor(['subtitle'])).toEqual([]);
+  it('offers conversion for a subtitle file, and burning in once there is a video too', () => {
+    expect(operationsFor(['subtitle']).map((operation) => operation.id)).toEqual([
+      'subtitle-convert',
+    ]);
+    expect(operationsFor(['subtitle', 'video']).map((operation) => operation.id)).toContain(
+      'subtitle-burn',
+    );
   });
 });
 

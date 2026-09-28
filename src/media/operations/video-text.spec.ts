@@ -5,7 +5,6 @@ import { previewCommand, type OperationContext } from './descriptor';
 import {
   buildVideoTextArgs,
   DEFAULT_TEXT,
-  escapeFilterValue,
   textFilter,
   textPlacement,
   textWindow,
@@ -30,18 +29,6 @@ const info: MediaInfo = {
 };
 const media = { id: 'f1', name: 'trip.mp4', kind: 'video' } as MediaFile;
 const context: OperationContext = { media, info, inputs: [{ media, info }] };
-
-describe('escapeFilterValue', () => {
-  it('leaves ordinary words alone', () => {
-    expect(escapeFilterValue('Summer 2026 — ünïcode')).toBe('Summer 2026 — ünïcode');
-  });
-
-  it('escapes for the option and then for the graph', () => {
-    expect(escapeFilterValue(`It's 12:30`)).toBe(`It\\\\\\'s 12\\\\:30`);
-    expect(escapeFilterValue('[a,b];')).toBe('\\[a\\,b\\]\\;');
-    expect(escapeFilterValue('c\\d')).toBe('c\\\\\\\\d');
-  });
-});
 
 describe('textPlacement', () => {
   it('centres the text across the frame at the top, middle and bottom', () => {
