@@ -15,6 +15,7 @@ export function ffprobeArgs(inputPath: string, outputPath: string): readonly str
     'json',
     '-show_format',
     '-show_streams',
+    '-show_chapters',
     inputPath,
     '-o',
     outputPath,
@@ -31,15 +32,17 @@ interface RawStream {
   readonly duration?: string;
   readonly sample_rate?: string;
   readonly channels?: number;
-  readonly tags?: { readonly language?: string; readonly title?: string };
+  readonly tags?: Readonly<Record<string, string>>;
 }
 
 interface RawProbe {
   readonly streams?: readonly RawStream[];
+  readonly chapters?: readonly unknown[];
   readonly format?: {
     readonly duration?: string;
     readonly bit_rate?: string;
     readonly format_name?: string;
+    readonly tags?: Readonly<Record<string, string>>;
   };
 }
 
@@ -82,7 +85,27 @@ export function parseFfprobe(json: string, kind: MediaKind): MediaInfo | undefin
     sampleRate: numberOrUndefined(audio?.sample_rate),
     channels: audio?.channels,
     subtitles: streams.filter((s) => s.codec_type === 'subtitle').map(subtitleTrack),
+    audioLanguages: streams
+      .filter((s) => s.codec_type === 'audio')
+      .map((s) => knownLanguage(s.tags?.['language'])),
+    tags: {
+      file: tagNames([raw.format?.tags]),
+      tracks: tagNames(streams.map((s) => s.tags)),
+    },
+    chapters: raw.chapters?.length ?? 0,
+    attachments: streams.filter((s) => s.codec_type === 'attachment').length,
   };
+}
+
+/** Tag names, lowercased and without repeats, in the order ffprobe lists them. */
+function tagNames(tagSets: readonly (Readonly<Record<string, string>> | undefined)[]): string[] {
+  const names = tagSets.flatMap((tags) => Object.keys(tags ?? {}).map((key) => key.toLowerCase()));
+  return [...new Set(names)];
+}
+
+/** A track's language, unless it is `und`, which is what a muxer writes when nobody said. */
+function knownLanguage(language: string | undefined): string | undefined {
+  return language && language !== 'und' ? language : undefined;
 }
 
 /** The subtitle codecs that are pictures rather than text. */
@@ -90,12 +113,10 @@ const PICTURE_SUBTITLES = new Set(['dvd_subtitle', 'hdmv_pgs_subtitle', 'dvb_sub
 
 function subtitleTrack(stream: RawStream): SubtitleTrack {
   const codec = stream.codec_name ?? 'unknown';
-  const language = stream.tags?.language;
   return {
     codec,
-    // `und` is what a muxer writes when nobody said.
-    language: language && language !== 'und' ? language : undefined,
-    title: stream.tags?.title || undefined,
+    language: knownLanguage(stream.tags?.['language']),
+    title: stream.tags?.['title'] || undefined,
     text: !PICTURE_SUBTITLES.has(codec),
   };
 }

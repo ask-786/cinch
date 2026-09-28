@@ -121,6 +121,9 @@ describe('operationsFor', () => {
 describe('groupOperations', () => {
   it('skips the groups with nothing in them', () => {
     const groups = groupOperations(operationsFor(['audio']));
-    expect(groups.map((group) => group.group)).toEqual(['audio']);
+    expect(groups.map((group) => group.group)).toEqual(['audio', 'metadata']);
+    expect(groupOperations(operationsFor(['subtitle'])).map((group) => group.group)).toEqual([
+      'subtitle',
+    ]);
   });
 });

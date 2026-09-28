@@ -147,7 +147,7 @@ export type Field<O extends OptionValues> =
   | NumberField<O>
   | TextField<O>;
 
-export type OperationGroup = 'video' | 'audio' | 'image' | 'subtitle';
+export type OperationGroup = 'video' | 'audio' | 'image' | 'subtitle' | 'metadata';
 
 export interface OperationDescriptor<O extends OptionValues> {
   readonly id: string;
@@ -200,6 +200,12 @@ export interface OperationDescriptor<O extends OptionValues> {
    * returns nothing.
    */
   readonly incomplete?: (options: O, context: OperationContext) => string | undefined;
+  /**
+   * A line about the file in hand, shown under the summary — something worth
+   * knowing before running, such as what is in the file. Not a warning; those
+   * are `preflight`.
+   */
+  readonly about?: (options: O, context: OperationContext) => string | undefined;
   /** Keeps impossible combinations from existing — runs after every change. */
   readonly normalize?: (options: O, context: OperationContext) => O;
   /** Cheap checks on combinations known to end badly (D17). */

@@ -335,7 +335,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 - [x] Images → video · [x] Video → images (extract frames) · [ ] GIF conversion
 - [x] Join videos (`concat`) · [x] Side by side and grids (`hstack`/`vstack`/`xstack`)
-- [x] Logo over a video (`overlay`) · [x] Text over a frame (`drawtext`) · [x] Split into segments · [ ] Strip or fix metadata
+- [x] Logo over a video (`overlay`) · [x] Text over a frame (`drawtext`) · [x] Split into segments · [x] Strip metadata
 
 - Fonts: DejaVu Sans and Sans Bold (`dejavu-fonts-ttf`) are copied unhashed to `fonts/`, like the
   cores. An operation that sets `fonts` has them fetched once per page and written to `/fonts`
@@ -360,6 +360,28 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - Measured: `-itsoffset` below zero is undone (FFmpeg moves the first line back to 0:00; −1 s and
   −2.5 s gave the same file). `-copyts -itsoffset S -i … -ss 0` keeps the times and drops lines
   that would start before zero; without `-ss 0` they are written as `00:00:00,-500`.
+
+**Metadata**
+
+- [x] Strip metadata (video and audio). Its own group in the picker, since it takes either kind.
+      The screen says what the file carries (a title, a location, a date…), read by ffprobe, which
+      now also counts chapters and records each audio track's language. Setting a new title or date
+      is left out for now.
+- Measured on the core: `-map_metadata -1 -map_chapters -1 -c copy -fflags +bitexact` removed the
+  title, location, dates, comment, chapters, per-track handler names and the encoder's version
+  from MP4, MOV, M4A, MKV, WebM, MP3, FLAC, Ogg, Opus and WAV. Rotation is side data and survives.
+  It also drops **track languages** (`spa` → `und`), so they are put back with
+  `-metadata:s:a:N language=…` from the probe, unless the user switches that off.
+- Streams are mapped `0:v? 0:a? 0:s?`: an MP4's data track was dropped even under `-map 0`,
+  and a phone's timed-metadata track is a data stream. MP3 and FLAC cover art is kept.
+- Measured on the core: an MKV with an attached font **aborts** under `-map_metadata -1`, which
+  takes the attachment's `filename` and `mimetype` too. `-map_metadata:s:t 0:s:t` gives them
+  back, but aborts on a file with no attachments ("Stream specifier t does not match any
+  streams"). So `0:t` and that mapping are added only when ffprobe counted attachments.
+- Until ffprobe has read the file, a warning says the languages and fonts would be lost; it
+  does not block the run, since a failed probe would otherwise block it for good.
+- Measured: photos are out of reach. A copied JPEG came out byte-identical, EXIF and GPS included,
+  and re-encoding one crashed the core ("memory access out of bounds").
 
 ### Stage 7 — Polish
 
