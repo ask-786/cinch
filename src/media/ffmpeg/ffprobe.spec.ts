@@ -69,6 +69,24 @@ describe('parseFfprobe', () => {
     expect(info?.audioCodec).toBeUndefined();
   });
 
+  it('lists subtitle tracks in order, telling text from pictures', () => {
+    const tracks = JSON.stringify({
+      streams: [
+        { codec_type: 'video', codec_name: 'h264' },
+        { codec_type: 'subtitle', codec_name: 'subrip', tags: { language: 'eng' } },
+        { codec_type: 'audio', codec_name: 'aac' },
+        { codec_type: 'subtitle', codec_name: 'ass', tags: { language: 'und', title: 'Signs' } },
+        { codec_type: 'subtitle', codec_name: 'hdmv_pgs_subtitle' },
+      ],
+      format: { duration: '3.0' },
+    });
+    expect(parseFfprobe(tracks, 'video')?.subtitles).toEqual([
+      { codec: 'subrip', language: 'eng', title: undefined, text: true },
+      { codec: 'ass', language: undefined, title: 'Signs', text: true },
+      { codec: 'hdmv_pgs_subtitle', language: undefined, title: undefined, text: false },
+    ]);
+  });
+
   it('gives up rather than guessing', () => {
     expect(parseFfprobe('not json', 'video')).toBeUndefined();
     expect(parseFfprobe('{}', 'video')).toBeUndefined();

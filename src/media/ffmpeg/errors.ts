@@ -12,6 +12,7 @@ export type FailureKind =
   | 'unsupported-codec'
   | 'container-mismatch'
   | 'no-stream'
+  | 'subtitle-encoding'
   | 'invalid-input'
   | 'no-space'
   | 'core-crash'
@@ -55,6 +56,16 @@ const PATTERNS: readonly Pattern[] = [
     detail:
       'The result is written into memory before it is saved, and there was not enough of it left.',
     hint: 'Close other tabs and try again, or aim for a smaller output.',
+  },
+  {
+    // Ahead of no-stream and invalid-input: FFmpeg follows it with both
+    // "Output file is empty" and "Invalid data found".
+    kind: 'subtitle-encoding',
+    match: /invalid UTF-8 in decoded subtitles|sub_charenc/i,
+    title: 'The subtitles are not in UTF-8',
+    detail:
+      'FFmpeg reads subtitle text as UTF-8, and this file is in an older encoding, usually the one Windows used for its language.',
+    hint: 'Pick the language it is written in under Text encoding and run it again.',
   },
   {
     kind: 'unsupported-codec',

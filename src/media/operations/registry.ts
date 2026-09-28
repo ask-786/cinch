@@ -11,6 +11,9 @@ import { audioTrim } from './audio-trim';
 import { audioVolume } from './audio-volume';
 import { audioWaveform } from './audio-waveform';
 import { imagesVideo } from './images-video';
+import { subtitleBurn } from './subtitle-burn';
+import { subtitleConvert } from './subtitle-convert';
+import { subtitleExtract } from './subtitle-extract';
 import { canRun, type Operation, type OperationGroup } from './descriptor';
 import { videoAdjust } from './video-adjust';
 import { videoBitrate } from './video-bitrate';
@@ -73,6 +76,9 @@ export const OPERATIONS: readonly Operation[] = [
   videoThumbnails,
   videoScenes,
   imagesVideo,
+  subtitleExtract,
+  subtitleConvert,
+  subtitleBurn,
 ];
 
 export function operationByRoute(route: string | null | undefined): Operation | undefined {

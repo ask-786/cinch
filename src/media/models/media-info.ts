@@ -20,6 +20,20 @@ export interface MediaInfo {
   readonly container?: string;
   readonly sampleRate?: number;
   readonly channels?: number;
+  /** ffprobe only: the subtitle tracks, in the order `0:s:N` counts them. */
+  readonly subtitles?: readonly SubtitleTrack[];
+}
+
+export interface SubtitleTrack {
+  readonly codec: string;
+  /** As tagged, usually ISO 639-2: `eng`, `fra`. */
+  readonly language?: string;
+  readonly title?: string;
+  /**
+   * Text can be converted and restyled. DVD and Blu-ray subtitles are
+   * pictures, which neither extraction to text nor libass can use.
+   */
+  readonly text: boolean;
 }
 
 /**
