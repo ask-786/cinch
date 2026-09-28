@@ -21,6 +21,7 @@ import { videoBitrate } from './video-bitrate';
 import { videoChromakey } from './video-chromakey';
 import { videoCompress } from './video-compress';
 import { videoConvert } from './video-convert';
+import { videoCrop } from './video-crop';
 import { videoDeinterlace } from './video-deinterlace';
 import { videoFps } from './video-fps';
 import { videoFrames } from './video-frames';
@@ -47,6 +48,7 @@ export const OPERATIONS: readonly Operation[] = [
   videoCompress,
   videoConvert,
   videoResize,
+  videoCrop,
   videoRotate,
   videoSpeed,
   videoFps,

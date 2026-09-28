@@ -33,6 +33,7 @@ interface RawStream {
   readonly sample_rate?: string;
   readonly channels?: number;
   readonly tags?: Readonly<Record<string, string>>;
+  readonly side_data_list?: readonly { readonly rotation?: number }[];
 }
 
 interface RawProbe {
@@ -75,6 +76,7 @@ export function parseFfprobe(json: string, kind: MediaKind): MediaInfo | undefin
     durationSeconds: duration,
     width: video?.width || undefined,
     height: video?.height || undefined,
+    rotation: video?.side_data_list?.find((data) => data.rotation !== undefined)?.rotation,
     hasVideo: video !== undefined,
     hasAudio: audio !== undefined,
     videoCodec: video?.codec_name,

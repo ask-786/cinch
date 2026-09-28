@@ -279,7 +279,7 @@ export class OperationScreen {
       });
     });
 
-    // The hand-written forms are lazy: nothing but trim pulls its component in.
+    // The hand-written forms are lazy: only trim and crop pull their component in.
     effect(() => {
       const key = this.descriptor()?.customForm;
       if (!key) {

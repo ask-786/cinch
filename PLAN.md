@@ -288,7 +288,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 **Video**
 
-- [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [ ] Crop · [x] Trim
+- [x] Compress (Stage 4) · [x] Convert format · [x] Resize · [x] Crop · [x] Trim
 - [x] Change FPS · [x] Change quality (Compress's quality mode) · [x] Change bitrate
 - [x] Rotate and flip · [x] Speed up / slow down · [x] Reverse · [x] Deinterlace
 - [x] Pad to an aspect ratio · [x] Colour adjust, sharpen, blur · [x] Remove a green screen
@@ -302,6 +302,18 @@ Resolved during design review. `D` numbers are referenced from the build stages.
   test colours encode fine, which hid it. Transparent green screen uses VP8 (`-auto-alt-ref 0`
   is required with alpha). Compress and Convert encode WebM as VP8 too; VP9 input still
   decodes and copies fine.
+- Crop's form is custom (D23): a box dragged over a still, with the generated fields embedded
+  underneath for the shape, the numbers and quality. `normalize` owns the box: it refits when the
+  shape or the file changes (`fittedTo` records both, as `1:1 1920x1080`), keeps it inside the frame
+  and on even numbers, and does nothing until the size is known. The page opens on the whole
+  picture, and the run is held back until the box cuts something away.
+- Measured on the core: `crop` sees the picture **upright**. A phone clip stored 1280×720 with a
+  90° display matrix took `crop=700:1200`, and came out without the rotation tag. ffprobe now
+  records `rotation`, and `displaySize` turns the stored size on its side. Resize and pad still read
+  the stored size, so they measure a phone clip on its side.
+- Measured: an odd crop (201×101) came out 200×100; a box larger than the frame fails the run
+  ("Invalid too big or non positive size"). Before the size is known, the command uses FFmpeg's
+  expressions (`min(iw\,ih*1/1)`, `(iw-ow)/2`), which the core parsed.
 - Measured: most of a blurred-bars pad's time is encoding the bigger frame, not the blur;
   blurring at a quarter size still cut the filter's own cost 3–4×.
 

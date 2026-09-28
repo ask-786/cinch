@@ -8,8 +8,14 @@ export interface MediaInfo {
   readonly source: 'native' | 'ffprobe';
   readonly kind: MediaKind;
   readonly durationSeconds?: number;
+  /** As stored, which for a phone video held upright is on its side — see `displaySize`. */
   readonly width?: number;
   readonly height?: number;
+  /**
+   * ffprobe only: degrees the picture is turned when played, from the display
+   * matrix a phone writes instead of turning the pixels.
+   */
+  readonly rotation?: number;
   readonly hasVideo?: boolean;
   readonly hasAudio?: boolean;
   /** ffprobe only. */
@@ -64,7 +70,24 @@ export function mergeInfo(
     durationSeconds: probed.durationSeconds ?? native.durationSeconds,
     width: probed.width ?? native.width,
     height: probed.height ?? native.height,
+    // The browser measures a phone video upright already, so ffprobe's
+    // rotation only belongs with ffprobe's own size.
+    rotation: probed.width ? probed.rotation : undefined,
     hasVideo: probed.hasVideo ?? native.hasVideo,
     hasAudio: probed.hasAudio ?? native.hasAudio,
   };
+}
+
+/**
+ * The picture's size the way it plays. FFmpeg turns a rotated video upright
+ * before any filter sees it, so a crop box or a size limit is measured on this.
+ */
+export function displaySize(
+  info: MediaInfo | undefined,
+): { width: number; height: number } | undefined {
+  if (!info?.width || !info.height) return undefined;
+  const sideways = Math.abs(info.rotation ?? 0) % 180 === 90;
+  return sideways
+    ? { width: info.height, height: info.width }
+    : { width: info.width, height: info.height };
 }

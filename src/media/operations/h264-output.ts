@@ -56,3 +56,24 @@ export function sameSizeEstimate(info: MediaInfo | undefined): number | undefine
   if (info?.durationSeconds === undefined || info.bitrate === undefined) return undefined;
   return Math.round((info.bitrate / 8) * info.durationSeconds);
 }
+
+/**
+ * For the operations that change the frame's size — resize, crop: bits per
+ * pixel per frame at CRF 23, fitted against the compress numbers, plus a
+ * typical 128 kbps of sound.
+ */
+export function h264Estimate(
+  frame: { readonly width: number; readonly height: number },
+  quality: number,
+  info: MediaInfo | undefined,
+): number | undefined {
+  const duration = info?.durationSeconds;
+  if (duration === undefined) return undefined;
+
+  const crf = qualityToCrf(quality, 'h264');
+  const bitsPerPixel = 0.09 * Math.pow(2, (23 - crf) / 6);
+  const frameRate = info?.frameRate ?? 30;
+  const videoBps = frame.width * frame.height * frameRate * bitsPerPixel;
+
+  return Math.round(((videoBps + 128_000) / 8) * duration);
+}

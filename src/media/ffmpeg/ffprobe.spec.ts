@@ -173,6 +173,23 @@ describe('parseFfprobe', () => {
     expect(info?.attachments).toBe(0);
   });
 
+  it('reads the rotation a phone stores beside the picture', () => {
+    const rotated = JSON.stringify({
+      streams: [
+        {
+          codec_type: 'video',
+          codec_name: 'h264',
+          width: 1280,
+          height: 720,
+          side_data_list: [{ side_data_type: 'Display Matrix', rotation: -90 }],
+        },
+      ],
+      format: { duration: '3.0' },
+    });
+    expect(parseFfprobe(rotated, 'video')?.rotation).toBe(-90);
+    expect(parseFfprobe(payload, 'video')?.rotation).toBeUndefined();
+  });
+
   it('gives up rather than guessing', () => {
     expect(parseFfprobe('not json', 'video')).toBeUndefined();
     expect(parseFfprobe('{}', 'video')).toBeUndefined();
