@@ -191,6 +191,10 @@ export class OperationScreen {
     () => this.descriptor()?.rejects?.(this.context()) ?? undefined,
   );
 
+  protected readonly missing = computed(
+    () => this.descriptor()?.incomplete?.(this.options(), this.context()) ?? undefined,
+  );
+
   protected readonly warnings = computed(
     () => this.descriptor()?.preflight?.(this.options(), this.context()) ?? [],
   );
@@ -331,7 +335,7 @@ export class OperationScreen {
     const descriptor = this.descriptor();
     const inputs = this.inputs();
     const media = inputs[0];
-    if (!descriptor || !media) return;
+    if (!descriptor || !media || this.missing()) return;
 
     const options = this.options();
     const context = this.context();
@@ -348,6 +352,7 @@ export class OperationScreen {
         // Captured by value: editing the form afterwards cannot change a job
         // that is already queued.
         build: (paths) => descriptor.build(options, paths, context),
+        fonts: descriptor.fonts,
         durationSeconds:
           descriptor.outputDuration?.(options, context) ?? context.info?.durationSeconds,
         sourceHeight: heights.length ? Math.max(...heights) : undefined,

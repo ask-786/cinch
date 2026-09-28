@@ -127,6 +127,7 @@ interface FieldView {
                 [label]="view.field.label"
                 [value]="asTyped(view.value)"
                 [placeholder]="view.field.placeholder ?? ''"
+                [maxLength]="view.field.maxLength"
                 (valueChange)="set(view.field.key, $event)"
               />
             }

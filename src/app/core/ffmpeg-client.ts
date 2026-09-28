@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { FFFSType, FFmpeg, type LogEvent, type ProgressEvent } from '@ffmpeg/ffmpeg';
 import { coreAssetList, coreAssetUrls } from '../../media/ffmpeg/core-assets';
 import { detectCapabilities, type CoreVariant } from '../../media/ffmpeg/core-routing';
+import { fontAssetUrls, FONTS_DIR } from '../../media/ffmpeg/font-assets';
 
 export type FfmpegStatus = 'idle' | 'loading' | 'ready' | 'running';
 
@@ -36,6 +37,7 @@ export class FfmpegClient {
   private loading?: Promise<void>;
   private mountCount = 0;
   private activeExec?: ExecOptions;
+  private fontBytes?: Promise<readonly { name: string; data: Uint8Array }[]>;
 
   /**
    * Fetches the ~32 MB core into the Cache API without instantiating it, so
@@ -125,6 +127,33 @@ export class FfmpegClient {
       path: `${mountPoint}/${file.name}`,
       mountPoint,
     };
+  }
+
+  /**
+   * Writes the bundled fonts to `FONTS_DIR`. Fetched once per page; written
+   * once per instance, since a terminated core takes its filesystem with it.
+   */
+  async installFonts(): Promise<void> {
+    const ffmpeg = this.require();
+    if ((await ffmpeg.listDir('/')).some((node) => node.name === FONTS_DIR.slice(1))) return;
+
+    this.fontBytes ??= Promise.all(
+      fontAssetUrls().map(async ({ name, url }) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Could not fetch the font ${name}.`);
+        return { name, data: new Uint8Array(await response.arrayBuffer()) };
+      }),
+    ).catch((error: unknown) => {
+      // Let the next job try again rather than remember a failed download.
+      this.fontBytes = undefined;
+      throw error;
+    });
+
+    const fonts = await this.fontBytes;
+    await ffmpeg.createDir(FONTS_DIR);
+    // `writeFile` transfers the buffer to the worker, so each write gets a copy.
+    for (const { name, data } of fonts)
+      await ffmpeg.writeFile(`${FONTS_DIR}/${name}`, data.slice());
   }
 
   async unmount(input: MountedInput): Promise<void> {

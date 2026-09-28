@@ -41,6 +41,12 @@ export interface BuildPaths {
    * `SEQUENCE_TOKEN`, which FFmpeg replaces with 0001, 0002, …
    */
   readonly outputPath: string;
+  /**
+   * The folder holding the bundled fonts, for an operation that sets `fonts`.
+   * The runner writes them to `FONTS_DIR`; the command we show names a local
+   * `fonts` folder instead.
+   */
+  readonly fontsDir?: string;
 }
 
 /**
@@ -176,6 +182,8 @@ export interface OperationDescriptor<O extends OptionValues> {
    * result is saved as a folder or a zip.
    */
   readonly outputs?: 'one' | 'many';
+  /** Draws text, so the bundled fonts must be in the core before it runs (D13). */
+  readonly fonts?: boolean;
   readonly defaults: O;
   readonly fields: readonly Field<O>[];
   /**
@@ -186,6 +194,12 @@ export interface OperationDescriptor<O extends OptionValues> {
   readonly customForm?: string;
   /** Why this file cannot be used, in the user's words. */
   readonly rejects?: (context: OperationContext) => string | undefined;
+  /**
+   * What the user still has to fill in, when the defaults cannot stand in for
+   * it — there is no sensible default caption. Holds the run back until it
+   * returns nothing.
+   */
+  readonly incomplete?: (options: O, context: OperationContext) => string | undefined;
   /** Keeps impossible combinations from existing — runs after every change. */
   readonly normalize?: (options: O, context: OperationContext) => O;
   /** Cheap checks on combinations known to end badly (D17). */
@@ -430,6 +444,7 @@ export function previewCommand(
     inputPath: inputPaths[0] ?? 'input',
     inputPaths,
     outputPath: outputNameFor(operation, options, context),
+    fontsDir: 'fonts',
   };
   return toShellCommand(operation.build(options, paths, context));
 }
