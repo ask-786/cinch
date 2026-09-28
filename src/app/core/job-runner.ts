@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { chooseCore, explainCoreChoice, type CoreVariant } from '../../media/ffmpeg/core-routing';
 import { explainFailure, type Explanation } from '../../media/ffmpeg/errors';
+import { FONTS_DIR } from '../../media/ffmpeg/font-assets';
 import { ProgressTracker } from '../../media/ffmpeg/progress';
 import { threadArgs, withThreads } from '../../media/ffmpeg/threads';
 import type { MediaFile } from '../../media/models/media-file';
@@ -21,6 +22,8 @@ export interface JobSpec {
   readonly outputMime: string;
   /** Pure: the same paths always produce the same command. */
   readonly build: (paths: JobPaths) => string[];
+  /** The command draws text, so the fonts go in first. */
+  readonly fonts?: boolean;
   readonly durationSeconds?: number;
   readonly sourceHeight?: number;
   readonly estimatedOutputBytes?: number;
@@ -174,9 +177,15 @@ export class JobRunner {
       // different folders would otherwise land on the same path.
       for (const media of spec.inputs) mounts.push(await this.client.mountInput(media.file));
       if (outputDir) await this.client.createDir(outputDir);
+      if (spec.fonts) await this.client.installFonts();
 
       const inputPaths = mounts.map((mount) => mount.path);
-      const command = spec.build({ inputPath: inputPaths[0], inputPaths, outputPath });
+      const command = spec.build({
+        inputPath: inputPaths[0],
+        inputPaths,
+        outputPath,
+        fontsDir: FONTS_DIR,
+      });
       // The thread count is the core's business, so it is added here rather than
       // by the operation — the command we show the user stays paste-able.
       const args = withThreads(

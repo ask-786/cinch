@@ -25,6 +25,7 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
         [attr.min]="type() === 'number' ? min() : null"
         [attr.max]="type() === 'number' ? max() : null"
         [attr.step]="type() === 'number' ? step() : null"
+        [attr.maxlength]="type() === 'text' ? (maxLength() ?? null) : null"
         [attr.inputmode]="type() === 'number' ? 'numeric' : null"
         [attr.aria-label]="label() ? null : ariaLabel()"
         (input)="onInput($event)"
@@ -58,6 +59,7 @@ export class TextInput {
   readonly min = input<number>();
   readonly max = input<number>();
   readonly step = input<number>(1);
+  readonly maxLength = input<number>();
   readonly disabled = input(false);
   readonly id = input(`input-${Math.random().toString(36).slice(2, 9)}`);
 

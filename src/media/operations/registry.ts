@@ -29,6 +29,7 @@ import { videoScenes } from './video-scenes';
 import { videoSegments } from './video-segments';
 import { videoSpeed } from './video-speed';
 import { videoStack } from './video-stack';
+import { videoText } from './video-text';
 import { videoThumbnails } from './video-thumbnails';
 import { videoTrim } from './video-trim';
 import { videoWatermark } from './video-watermark';
@@ -55,6 +56,7 @@ export const OPERATIONS: readonly Operation[] = [
   videoJoin,
   videoStack,
   videoWatermark,
+  videoText,
   videoChromakey,
   audioExtract,
   audioTrim,

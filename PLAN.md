@@ -335,7 +335,14 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 
 - [x] Images → video · [x] Video → images (extract frames) · [ ] GIF conversion
 - [x] Join videos (`concat`) · [x] Side by side and grids (`hstack`/`vstack`/`xstack`)
-- [x] Logo over a video (`overlay`) · [ ] Text over a frame (`drawtext`, needs the `.ttf`) · [x] Split into segments · [ ] Strip or fix metadata
+- [x] Logo over a video (`overlay`) · [x] Text over a frame (`drawtext`) · [x] Split into segments · [ ] Strip or fix metadata
+
+- Fonts: DejaVu Sans and Sans Bold (`dejavu-fonts-ttf`) are copied unhashed to `fonts/`, like the
+  cores. An operation that sets `fonts` has them fetched once per page and written to `/fonts`
+  once per core instance, before it runs; the command shown points at a local `fonts/` folder.
+- Measured on the core: a caption is unescaped twice, as a filter option and as part of the
+  graph. Escaping for both (`escapeFilterValue`) drew `It's 50% off: [a,b]; c\d %{pts} "q"`
+  as typed; `expansion=none` keeps `%{…}` literal.
 
 **Subtitles**
 
@@ -348,7 +355,7 @@ Resolved during design review. `D` numbers are referenced from the build stages.
 - [ ] Chain output into another operation
 - [ ] Operation settings serialized into the URL
 - [ ] Temp file cleanup and object URL release
-- [ ] About / Licenses footer with GPL and FFmpeg attribution (D19)
+- [ ] About / Licenses footer with GPL and FFmpeg attribution (D19), and the DejaVu font licence
 - [ ] Host header configs and service-worker isolation fallback (D2)
 - [ ] Production build and static deploy verification
 

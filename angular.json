@@ -48,6 +48,11 @@
                 "glob": "ffmpeg-core.worker.js",
                 "input": "node_modules/@ffmpeg/core-mt/dist/esm",
                 "output": "ffmpeg/mt"
+              },
+              {
+                "glob": "{DejaVuSans,DejaVuSans-Bold}.ttf",
+                "input": "node_modules/dejavu-fonts-ttf/ttf",
+                "output": "fonts"
               }
             ],
             "styles": ["src/styles.css"]
