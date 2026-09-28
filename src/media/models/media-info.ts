@@ -22,6 +22,18 @@ export interface MediaInfo {
   readonly channels?: number;
   /** ffprobe only: the subtitle tracks, in the order `0:s:N` counts them. */
   readonly subtitles?: readonly SubtitleTrack[];
+  /** ffprobe only: each audio track's language, in the order `0:a:N` counts them. */
+  readonly audioLanguages?: readonly (string | undefined)[];
+  /**
+   * ffprobe only: the names of the tags on the file and on its tracks,
+   * lowercased — `title`, `creation_time`, `handler_name`. Housekeeping
+   * included; telling it apart is up to whoever reads them.
+   */
+  readonly tags?: { readonly file: readonly string[]; readonly tracks: readonly string[] };
+  /** ffprobe only: how many chapters the file is divided into. */
+  readonly chapters?: number;
+  /** ffprobe only: files carried inside a Matroska file, usually fonts for its subtitles. */
+  readonly attachments?: number;
 }
 
 export interface SubtitleTrack {

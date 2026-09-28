@@ -195,6 +195,10 @@ export class OperationScreen {
     () => this.descriptor()?.incomplete?.(this.options(), this.context()) ?? undefined,
   );
 
+  protected readonly about = computed(
+    () => this.descriptor()?.about?.(this.options(), this.context()) ?? undefined,
+  );
+
   protected readonly warnings = computed(
     () => this.descriptor()?.preflight?.(this.options(), this.context()) ?? [],
   );

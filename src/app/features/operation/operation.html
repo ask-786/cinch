@@ -263,6 +263,9 @@
 
           <div class="rounded-card border border-line bg-surface p-5">
             <p class="mb-4 text-sm text-muted">{{ op.summary }}</p>
+            @if (about(); as text) {
+              <p class="-mt-2 mb-4 text-sm text-ink">{{ text }}</p>
+            }
 
             @if (op.customForm) {
               @if (customForm(); as component) {

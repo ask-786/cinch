@@ -11,6 +11,7 @@ import { audioTrim } from './audio-trim';
 import { audioVolume } from './audio-volume';
 import { audioWaveform } from './audio-waveform';
 import { imagesVideo } from './images-video';
+import { metadataStrip } from './metadata-strip';
 import { subtitleBurn } from './subtitle-burn';
 import { subtitleConvert } from './subtitle-convert';
 import { subtitleExtract } from './subtitle-extract';
@@ -79,6 +80,7 @@ export const OPERATIONS: readonly Operation[] = [
   subtitleExtract,
   subtitleConvert,
   subtitleBurn,
+  metadataStrip,
 ];
 
 export function operationByRoute(route: string | null | undefined): Operation | undefined {
@@ -103,13 +105,14 @@ export const GROUP_LABELS: Readonly<Record<OperationGroup, string>> = {
   audio: 'Audio',
   image: 'Images & GIF',
   subtitle: 'Subtitles',
+  metadata: 'Metadata',
 };
 
 /** Operations bucketed by group, in registry order, skipping empty groups. */
 export function groupOperations(
   operations: readonly Operation[],
 ): readonly { group: OperationGroup; label: string; operations: readonly Operation[] }[] {
-  const groups: OperationGroup[] = ['video', 'audio', 'image', 'subtitle'];
+  const groups: OperationGroup[] = ['video', 'audio', 'image', 'subtitle', 'metadata'];
   return groups
     .map((group) => ({
       group,
